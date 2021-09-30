@@ -199,11 +199,11 @@ namespace UnityEditor.AddressableAssets.GUI
                         DirectoryInfo dir = new DirectoryInfo(Application.dataPath + "/Project");
                         var dirs = dir.GetDirectories();
 
-                        foreach (var packageDir in dirs)
+                        foreach (var gameDir in dirs)
                         {
-                            if (packageDir != null)
-                                menu.AddItem(new GUIContent("New Project Package(Sub Game)/" + packageDir.Name), false,
-                                    m_EntryTree.CreateNewProject, packageDir.Name);
+                            if (gameDir != null)
+                                menu.AddItem(new GUIContent("New Project Package/" + gameDir.Name), false,
+                                    m_EntryTree.CreateNewPackage, gameDir.Name);
                         }
                         menu.DropDown(rMode);
                     }
@@ -276,10 +276,20 @@ namespace UnityEditor.AddressableAssets.GUI
                         if (m.CanBuildData<AddressablesPlayerBuildResult>())
                         {
                             AddressablesPlayerBuildResultBuilderExists = true;
-                            menu.AddItem(new GUIContent("New Build/" + m.Name), false, OnBuildScript, i);
+                            //menu.AddItem(new GUIContent("New Build/" + m.Name), false, OnBuildScript, i);
+
+                            // 增加build apk和buildpackage的功能
+                            menu.AddItem(new GUIContent("New Build/Build APK"), false, OnBuildApk, i);
+                            var packages = AddressableAssetSettingsDefaultObject.Settings.m_Packages;
+                            foreach (var package in packages)
+                            {
+                                if (package != null)
+                                    menu.AddItem(new GUIContent("New Build/Build Package->" + package), false,
+                                        OnBuildPackage, new object[] { i, package });
+                            }  
                         }
                     }
-
+                    // 添加构建apk选项
                     if (!AddressablesPlayerBuildResultBuilderExists)
                     {
                         menu.AddDisabledItem(new GUIContent("New Build/No Build Script Available"));
@@ -369,6 +379,20 @@ namespace UnityEditor.AddressableAssets.GUI
         {
             OnSetActiveBuildScript(context);
             OnBuildPlayerData();
+        }
+
+        void OnBuildApk(object context)
+        {
+            OnSetActiveBuildScript(context);
+            AddressableAssetSettings.BuildApk();
+        }
+
+
+        void OnBuildPackage(object context)
+        {
+            object[] objects = context as object[];
+            OnSetActiveBuildScript(objects[0]);
+            AddressableAssetSettings.BuildPackage(objects[1].ToString());
         }
 
         void OnBuildPlayerData()

@@ -273,7 +273,9 @@ namespace UnityEditor.AddressableAssets.Settings
             /// <summary>
             /// Use to indicate that a new certificate handler is being used for the initialization object provider.
             /// </summary>
-            CertificateHandlerChanged
+            CertificateHandlerChanged,
+
+            ModifyPackage,
         }
 
         /// <summary>
@@ -395,6 +397,11 @@ namespace UnityEditor.AddressableAssets.Settings
 
         [SerializeField]
         bool m_UniqueBundleIds = false;
+
+
+        [HideInInspector]
+        [SerializeField]
+        public List<string> m_Packages;
 
         [SerializeField]
 #if UNITY_2021_1_OR_NEWER
@@ -1436,6 +1443,8 @@ namespace UnityEditor.AddressableAssets.Settings
 
                 if (isPersisted)
                     AssetDatabase.SaveAssets();
+
+                aa.m_Packages = new List<string>();
             }
             return aa;
         }
@@ -2283,6 +2292,56 @@ namespace UnityEditor.AddressableAssets.Settings
             BuildPlayerContent(out AddressablesPlayerBuildResult rst);
         }
 
+
+        public static void BuildApk()
+        {
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
+            if (settings == null)
+            {
+                AddressablesPlayerBuildResult result;
+                string error;
+                if (EditorApplication.isUpdating)
+                    error = "Addressable Asset Settings does not exist.  EditorApplication.isUpdating was true.";
+                else if (EditorApplication.isCompiling)
+                    error = "Addressable Asset Settings does not exist.  EditorApplication.isCompiling was true.";
+                else
+                    error = "Addressable Asset Settings does not exist.  Failed to create.";
+                Debug.LogError(error);
+                result = new AddressablesPlayerBuildResult();
+                result.Error = error;
+                return;
+            }
+
+            NullifyBundleFileIds(settings);
+
+            settings.BuildPackageContent("Default");
+        }
+
+
+        public static void BuildPackage(string packageName)
+        {
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
+            if (settings == null)
+            {
+                AddressablesPlayerBuildResult result;
+                string error;
+                if (EditorApplication.isUpdating)
+                    error = "Addressable Asset Settings does not exist.  EditorApplication.isUpdating was true.";
+                else if (EditorApplication.isCompiling)
+                    error = "Addressable Asset Settings does not exist.  EditorApplication.isCompiling was true.";
+                else
+                    error = "Addressable Asset Settings does not exist.  Failed to create.";
+                Debug.LogError(error);
+                result = new AddressablesPlayerBuildResult();
+                result.Error = error;
+                return;
+            }
+
+            NullifyBundleFileIds(settings);
+
+            settings.BuildPackageContent(packageName);
+        }
+
 #if (ENABLE_CCD && UNITY_2019_4_OR_NEWER)
         /// <summary>
         /// Runs the active player data build script to create runtime data.
@@ -2546,6 +2605,8 @@ namespace UnityEditor.AddressableAssets.Settings
             AssetDatabase.Refresh();
             return result;
         }
+
+
 
         internal AddressablesPlayerBuildResult BuildPlayerContentImpl()
         {

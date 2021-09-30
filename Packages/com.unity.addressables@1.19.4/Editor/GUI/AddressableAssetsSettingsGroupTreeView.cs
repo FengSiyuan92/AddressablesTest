@@ -173,6 +173,8 @@ namespace UnityEditor.AddressableAssets.GUI
             }
             var startId = 0;
             var keys = new List<string>(projectRoot.Keys);
+            AddressableAssetSettingsDefaultObject.Settings.m_Packages = keys;
+
             foreach (var key in keys)
             {
                 var node = new TreeViewItem(startId++, 0, key); ;
@@ -1130,7 +1132,7 @@ namespace UnityEditor.AddressableAssets.GUI
         }
 
         // 创建一个Project
-        internal void CreateNewProject(object context)
+        internal void CreateNewPackage(object context)
         {
             var projectName = context.ToString();
 
@@ -1142,6 +1144,8 @@ namespace UnityEditor.AddressableAssets.GUI
                 projectName = com[0] + "-" + num;
             }
             projectRoot.Add(projectName, new TreeViewItem(projectRoot.Count, 0, projectName));
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
+            settings.m_Packages.Add(projectName);
             Reload();
         }
 

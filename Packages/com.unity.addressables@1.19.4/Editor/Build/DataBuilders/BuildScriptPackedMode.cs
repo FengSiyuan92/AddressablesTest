@@ -290,8 +290,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
                 }
 
                 // 筛选出此次build需要进catalog的队列
-                var catalogGroup = groups.Where(g => g.BelongProjectPackage == "Default" ||
-                    g.BelongProjectPackage == aaContext.ProjectPackage);
+                var catalogGroup = groups.Where(g => g.BelongProjectPackage == Package) ;
 
                 ProcessCatalogEntriesForBuild(aaContext, m_Log, catalogGroup, builderInput, extractData.WriteData, carryOverCachedState, m_BundleToInternalId);
                 foreach (var postUpdateCatalogCallback in postCatalogUpdateCallbacks)
@@ -597,12 +596,10 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             if (assetGroup == null)
                 return string.Empty;
 
-            // 不需要构建的package包不进行处理
-            if (!aaContext.ProjectPackage.Contains(assetGroup.BelongProjectPackage) )
+            if (Package != assetGroup.BelongProjectPackage)
             {
                 return string.Empty;
             }
-
 
             if (assetGroup.Schemas.Count == 0)
             {
