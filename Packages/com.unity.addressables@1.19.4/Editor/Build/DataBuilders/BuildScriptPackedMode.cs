@@ -29,7 +29,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
     /// Build scripts used for player builds and running with bundles in the editor.
     /// </summary>
     [CreateAssetMenu(fileName = "BuildScriptPacked.asset", menuName = "Addressables/Content Builders/Default Build Script")]
-    public class BuildScriptPackedMode : BuildScriptBase , IPackageBuilder
+    public class BuildScriptPackedMode : BuildScriptBase
     {
         /// <inheritdoc />
         public override string Name
@@ -38,10 +38,6 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             {
                 return "Default Build Script";
             }
-        }
-
-        public string Package {
-            get;set;
         }
 
         internal List<ObjectInitializationData> m_ResourceProviderData;
@@ -87,8 +83,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             return result;
         }
 
-        internal void InitializeBuildContext(AddressablesDataBuilderInput builderInput, 
-            out AddressableAssetsBuildContext aaContext)
+        internal void InitializeBuildContext(AddressablesDataBuilderInput builderInput, out AddressableAssetsBuildContext aaContext)
         {
             var aaSettings = builderInput.AddressableSettings;
 
@@ -201,13 +196,11 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
         /// <param name="aaContext"></param>
         /// <typeparam name="TResult"></typeparam>
         /// <returns></returns>
-        protected virtual TResult DoBuild<TResult>(AddressablesDataBuilderInput builderInput, 
-            AddressableAssetsBuildContext aaContext) where TResult : IDataBuilderResult
+        protected virtual TResult DoBuild<TResult>(AddressablesDataBuilderInput builderInput, AddressableAssetsBuildContext aaContext) where TResult : IDataBuilderResult
         {
             ExtractDataTask extractData = new ExtractDataTask();
             List<CachedAssetState> carryOverCachedState = new List<CachedAssetState>();
-            var tempPath = Path.GetDirectoryName(Application.dataPath) + "/" + Addressables.LibraryPath 
-                + PlatformMappingService.GetPlatformPathSubFolder() + "/addressables_content_state.bin";
+            var tempPath = Path.GetDirectoryName(Application.dataPath) + "/" + Addressables.LibraryPath + PlatformMappingService.GetPlatformPathSubFolder() + "/addressables_content_state.bin";
 
             var playerBuildVersion = builderInput.PlayerVersion;
             if (m_AllBundleInputDefs.Count > 0)
@@ -240,8 +233,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
                 using (m_Log.ScopedStep(LogLevel.Info, "ContentPipeline.BuildAssetBundles"))
                 using (new SBPSettingsOverwriterScope(ProjectConfigData.GenerateBuildLayout)) // build layout generation requires full SBP write results
                 {
-                    var exitCode = ContentPipeline.BuildAssetBundles(buildParams, new BundleBuildContent(m_AllBundleInputDefs), 
-                        out results, buildTasks, aaContext, m_Log);
+                    var exitCode = ContentPipeline.BuildAssetBundles(buildParams, new BundleBuildContent(m_AllBundleInputDefs), out results, buildTasks, aaContext, m_Log);
 
                     if (exitCode < ReturnCode.Success)
                         return AddressableAssetBuildResult.CreateResult<TResult>(null, 0, "SBP Error" + exitCode);
@@ -289,10 +281,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
                     BuildTasksRunner.Run(tasks, extractData.m_BuildContext);
                 }
 
-                // 筛选出此次build需要进catalog的队列
-                var catalogGroup = groups.Where(g => g.BelongProjectPackage == Package) ;
-
-                ProcessCatalogEntriesForBuild(aaContext, m_Log, catalogGroup, builderInput, extractData.WriteData, carryOverCachedState, m_BundleToInternalId);
+                ProcessCatalogEntriesForBuild(aaContext, m_Log, groups, builderInput, extractData.WriteData, carryOverCachedState, m_BundleToInternalId);
                 foreach (var postUpdateCatalogCallback in postCatalogUpdateCallbacks)
                     postUpdateCatalogCallback.Invoke();
 
@@ -357,8 +346,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
                 var allEntries = new List<AddressableAssetEntry>();
                 aaContext.Settings.GetAllAssets(allEntries, false, ContentUpdateScript.GroupFilter);
                 var remoteCatalogLoadPath = aaContext.Settings.BuildRemoteCatalog ? aaContext.Settings.RemoteCatalogLoadPath.GetValue(aaContext.Settings) : string.Empty;
-                if (ContentUpdateScript.SaveContentState(aaContext.locations, tempPath, allEntries, 
-                    extractData.DependencyData, playerBuildVersion, remoteCatalogLoadPath, carryOverCachedState))
+                if (ContentUpdateScript.SaveContentState(aaContext.locations, tempPath, allEntries, extractData.DependencyData, playerBuildVersion, remoteCatalogLoadPath, carryOverCachedState))
                 {
                     string contentStatePath = ContentUpdateScript.GetContentStateDataPath(false);
                     try
@@ -590,16 +578,10 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
         }
 
         /// <inheritdoc />
-        protected override string ProcessGroup(AddressableAssetGroup assetGroup, 
-            AddressableAssetsBuildContext aaContext)
+        protected override string ProcessGroup(AddressableAssetGroup assetGroup, AddressableAssetsBuildContext aaContext)
         {
             if (assetGroup == null)
                 return string.Empty;
-
-            if (Package != assetGroup.BelongProjectPackage)
-            {
-                return string.Empty;
-            }
 
             if (assetGroup.Schemas.Count == 0)
             {
@@ -851,8 +833,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             return combinedEntries;
         }
 
-        internal static void GenerateBuildInputDefinitions(List<AddressableAssetEntry> allEntries, 
-            List<AssetBundleBuild> buildInputDefs, string groupGuid, string address, bool ignoreUnsupportedFilesInBuild)
+        internal static void GenerateBuildInputDefinitions(List<AddressableAssetEntry> allEntries, List<AssetBundleBuild> buildInputDefs, string groupGuid, string address, bool ignoreUnsupportedFilesInBuild)
         {
             var scenes = new List<AddressableAssetEntry>();
             var assets = new List<AddressableAssetEntry>();
@@ -1010,11 +991,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             }
         }
 
-        void PostProcessBundles(AddressableAssetGroup assetGroup, List<string> buildBundles, 
-            List<string> outputBundles, IBundleBuildResults buildResult, 
-            ResourceManagerRuntimeData runtimeData, List<ContentCatalogDataEntry> locations, 
-            FileRegistry registry, Dictionary<string, ContentCatalogDataEntry> primaryKeyToCatalogEntry, 
-            Dictionary<string, string> bundleRenameMap, List<Action> postCatalogUpdateCallbacks)
+        void PostProcessBundles(AddressableAssetGroup assetGroup, List<string> buildBundles, List<string> outputBundles, IBundleBuildResults buildResult, ResourceManagerRuntimeData runtimeData, List<ContentCatalogDataEntry> locations, FileRegistry registry, Dictionary<string, ContentCatalogDataEntry> primaryKeyToCatalogEntry, Dictionary<string, string> bundleRenameMap, List<Action> postCatalogUpdateCallbacks)
         {
             var schema = assetGroup.GetSchema<BundledAssetGroupSchema>();
             if (schema == null)

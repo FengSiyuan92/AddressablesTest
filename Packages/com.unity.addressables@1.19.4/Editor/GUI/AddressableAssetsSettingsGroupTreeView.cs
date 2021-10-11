@@ -20,12 +20,8 @@ namespace UnityEditor.AddressableAssets.GUI
         AddressableAssetsSettingsGroupEditor m_Editor;
         internal string customSearchString = string.Empty;
         string m_FirstSelectedGroup;
-        string m_FirstSelectPackage;
         private readonly Dictionary<AssetEntryTreeViewItem, bool> m_SearchedEntries = new Dictionary<AssetEntryTreeViewItem, bool>();
         private bool m_ForceSelectionClear = false;
-
-        private Dictionary<string, TreeViewItem> projectRoot;
-
 
         enum ColumnId
         {
@@ -92,18 +88,10 @@ namespace UnityEditor.AddressableAssets.GUI
         {
             if (selectedIds.Count == 1)
             {
-                var treeItem = FindItemInVisibleRows(selectedIds[0]);
-                if (treeItem != null)
+                var item = FindItemInVisibleRows(selectedIds[0]);
+                if (item != null && item.group != null)
                 {
-                    if (treeItem is AssetEntryTreeViewItem)
-                    {
-                        var item = treeItem as AssetEntryTreeViewItem;
-                        m_FirstSelectedGroup = item.group.name;
-                    }
-                    else 
-                    {
-                        m_FirstSelectPackage = treeItem.displayName;
-                    }
+                    m_FirstSelectedGroup = item.group.name;
                 }
             }
 
@@ -112,28 +100,18 @@ namespace UnityEditor.AddressableAssets.GUI
             UnityEngine.Object[] selectedObjects = new UnityEngine.Object[selectedIds.Count];
             for (int i = 0; i < selectedIds.Count; i++)
             {
-                var treeItem = FindItemInVisibleRows(selectedIds[i]);
-                if (treeItem != null)
+                var item = FindItemInVisibleRows(selectedIds[i]);
+                if (item != null)
                 {
-                    if (treeItem is AssetEntryTreeViewItem)
-                    {
-                        var item = treeItem as AssetEntryTreeViewItem;
-                        if (item.group != null)
-                            selectedObjects[i] = item.group;
-                        else if (item.entry != null)
-                            selectedObjects[i] = item.entry.TargetAsset;
-                    }
-                    else
-                    {
-                        m_FirstSelectPackage = treeItem.displayName;
-                        var dir = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>("Assets/Project/" + m_FirstSelectPackage.Split('-')[0]);
-                        selectedObjects[i] = dir;
-                    }
+                    if (item.group != null)
+                        selectedObjects[i] = item.group;
+                    else if (item.entry != null)
+                        selectedObjects[i] = item.entry.TargetAsset;
                 }
             }
 
             // Make last selected group the first object in the array
-            if ((!string.IsNullOrEmpty(m_FirstSelectedGroup) || string.IsNullOrEmpty(m_FirstSelectPackage)) && selectedObjects.Length > 1)
+            if (!string.IsNullOrEmpty(m_FirstSelectedGroup) && selectedObjects.Length > 1)
             {
                 for (int i = 0; i < selectedObjects.Length-1; ++i)
                 {
@@ -152,43 +130,10 @@ namespace UnityEditor.AddressableAssets.GUI
         protected override TreeViewItem BuildRoot()
         {
             var root = new TreeViewItem(-1, -1);
-            /* append by fsy */
-            // 创建多个projectPackage
-          
-            projectRoot = projectRoot ?? new Dictionary<string, TreeViewItem>();
-            if (projectRoot.Count == 0)
-            {
-                foreach (var group in m_Editor.settings.groups)
-                {
-                    if (group == null)
-                    {
-                        continue;
-                    }
-                    var belong = group.BelongProjectPackage;
-                    if (!projectRoot.ContainsKey(belong))
-                    {
-                        projectRoot.Add(belong, null);
-                    }
-                }
-            }
-            var startId = 0;
-            var keys = new List<string>(projectRoot.Keys);
-            AddressableAssetSettingsDefaultObject.Settings.m_Packages = keys;
-
-            foreach (var key in keys)
-            {
-                var node = new TreeViewItem(startId++, 0, key); ;
-                projectRoot[key] = node;
-                root.AddChild(node);
-            }
-            /* append by fsy end */
-
             using (new AddressablesFileEnumerationScope(BuildAddressableTree(m_Editor.settings)))
             {
-
                 foreach (var group in m_Editor.settings.groups)
-                    // AddGroupChildrenBuild(group, root);
-                    AddGroupChildrenBuild(group, group != null ? projectRoot[group.BelongProjectPackage] : root);
+                    AddGroupChildrenBuild(group, root);
             }
             return root;
         }
@@ -433,7 +378,7 @@ namespace UnityEditor.AddressableAssets.GUI
 
         void AddGroupChildrenBuild(AddressableAssetGroup group, TreeViewItem root)
         {
-            int depth = 1;
+            int depth = 0;
 
             AssetEntryTreeViewItem groupItem = null;
             if (ProjectConfigData.ShowGroupsAsHierarchy && group != null)
@@ -461,7 +406,7 @@ namespace UnityEditor.AddressableAssets.GUI
             }
             else
             {
-                groupItem = new AssetEntryTreeViewItem(group, 1);
+                groupItem = new AssetEntryTreeViewItem(group, 0);
                 root.AddChild(groupItem);
             }
 
@@ -758,14 +703,14 @@ namespace UnityEditor.AddressableAssets.GUI
             return !string.IsNullOrEmpty(CheckForRename(item, true));
         }
 
-        TreeViewItem FindItemInVisibleRows(int id)
+        AssetEntryTreeViewItem FindItemInVisibleRows(int id)
         {
             var rows = GetRows();
             foreach (var r in rows)
             {
                 if (r.id == id)
                 {
-                    return r ;
+                    return r as AssetEntryTreeViewItem;
                 }
             }
             return null;
@@ -776,12 +721,7 @@ namespace UnityEditor.AddressableAssets.GUI
             if (!args.acceptedRename)
                 return;
             
-            var treeItem = FindItemInVisibleRows(args.itemID);
-            if (!(treeItem is AssetEntryTreeViewItem))
-            {
-                return;
-            }
-            var item = treeItem as AssetEntryTreeViewItem;
+            var item = FindItemInVisibleRows(args.itemID);
             if (item != null)
             {
                 item.isRenaming = false;
@@ -827,15 +767,9 @@ namespace UnityEditor.AddressableAssets.GUI
 
         protected override void DoubleClickedItem(int id)
         {
-            var treeItem = FindItemInVisibleRows(id);
-            if (treeItem == null)
+            var item = FindItemInVisibleRows(id);
+            if (item != null)
             {
-                return;
-            }
-
-            if (treeItem is AssetEntryTreeViewItem)
-            {
-                var item = treeItem as AssetEntryTreeViewItem;
                 Object o = null;
                 if (item.entry != null)
                     o = AssetDatabase.LoadAssetAtPath<Object>(item.entry.AssetPath);
@@ -848,13 +782,6 @@ namespace UnityEditor.AddressableAssets.GUI
                     Selection.activeObject = o;
                 }
             }
-            else
-            {
-                // TODO ping package dir
-            }
-        
-           
-          
         }
 
         bool m_ContextOnItem;
@@ -876,10 +803,7 @@ namespace UnityEditor.AddressableAssets.GUI
             foreach (var templateObject in m_Editor.settings.GroupTemplateObjects)
             {
                 Assert.IsNotNull(templateObject);
-                menu.AddItem(new GUIContent("Create New Group/" + templateObject.name), false, (context)=>
-                {
-                    CreateNewGroup(context, null);
-                }, templateObject);
+                menu.AddItem(new GUIContent("Create New Group/" + templateObject.name), false, CreateNewGroup, templateObject);
             }
         }
 
@@ -900,7 +824,7 @@ namespace UnityEditor.AddressableAssets.GUI
             List<AssetEntryTreeViewItem> selectedNodes = new List<AssetEntryTreeViewItem>();
             foreach (var nodeId in GetSelection())
             {
-                var item = FindItemInVisibleRows(nodeId) as AssetEntryTreeViewItem; //TODO - this probably makes off-screen but selected items not get added to list.
+                var item = FindItemInVisibleRows(nodeId); //TODO - this probably makes off-screen but selected items not get added to list.
                 if (item != null)
                     selectedNodes.Add(item);
             }
@@ -1087,7 +1011,7 @@ namespace UnityEditor.AddressableAssets.GUI
             var itemList = new List<AssetEntryTreeViewItem>();
             foreach (var nodeId in GetSelection())
             {
-                var item = FindItemInVisibleRows(nodeId) as AssetEntryTreeViewItem;
+                var item = FindItemInVisibleRows(nodeId);
                 if (item != null)
                     itemList.Add(item);
             }
@@ -1123,7 +1047,7 @@ namespace UnityEditor.AddressableAssets.GUI
             var entries = new List<AddressableAssetEntry>();
             foreach (var nodeId in GetSelection())
             {
-                var item = FindItemInVisibleRows(nodeId) as AssetEntryTreeViewItem;
+                var item = FindItemInVisibleRows(nodeId);
                 if (item != null)
                     entries.Add(item.entry);
             }
@@ -1131,83 +1055,17 @@ namespace UnityEditor.AddressableAssets.GUI
                 m_Editor.settings.MoveEntries(entries, targetGroup);
         }
 
-        // 创建一个Project
-        internal void CreateNewPackage(object context)
-        {
-            var projectName = context.ToString();
-
-            while (projectRoot.ContainsKey(projectName))
-            {
-                var com = projectName.Split('-');
-                var num = com.Length > 1 ? int.Parse(com[1]): 0;
-                num += 1;
-                projectName = com[0] + "-" + num;
-            }
-            projectRoot.Add(projectName, new TreeViewItem(projectRoot.Count, 0, projectName));
-            var settings = AddressableAssetSettingsDefaultObject.Settings;
-            settings.m_Packages.Add(projectName);
-            Reload();
-        }
-
-
-        internal void CreateNewGroupInPackage(object context, string packageName)
+        internal void CreateNewGroup(object context)
         {
             var groupTemplate = context as AddressableAssetGroupTemplate;
             if (groupTemplate != null)
             {
                 AddressableAssetGroup newGroup = m_Editor.settings.CreateGroup(groupTemplate.Name, false, false, true, null, groupTemplate.GetTypes());
-                CopyGroupToPackageDir(newGroup, packageName);
                 groupTemplate.ApplyToAddressableAssetGroup(newGroup);
             }
             else
             {
-                var group = m_Editor.settings.CreateGroup("", false, false, false, null);
-                CopyGroupToPackageDir(group, packageName);
-                Reload();
-            }
-        }
-
-        void CopyGroupToPackageDir(AddressableAssetGroup group, string packageName)
-        {
-            if (string.IsNullOrEmpty(packageName))
-            {
-                return;
-            }
-            group.BelongProjectPackage = packageName;
-
-            var path = AssetDatabase.GetAssetPath(group);
-            var target = "Assets/Project/" + packageName.Split('-')[0];
-
-            AssetDatabase.MoveAsset(path, target + "/" + Path.GetFileName(path)) ;
-
-            if (group.Schemas != null && group.Schemas.Count > 0)
-            {
-                foreach (var schema in group.Schemas)
-                {
-                    var schemaPath = AssetDatabase.GetAssetPath(schema);
-                    AssetDatabase.MoveAsset(schemaPath, target + "/" + Path.GetFileName(schemaPath));
-                }
-            }
-        }
-
-        internal void CreateNewGroup(object context, string packageName )
-        {
-            if (string.IsNullOrEmpty(packageName))
-            {
-                packageName = m_FirstSelectPackage;
-            }
-
-            var groupTemplate = context as AddressableAssetGroupTemplate;
-            if (groupTemplate != null)
-            {
-                AddressableAssetGroup newGroup = m_Editor.settings.CreateGroup(groupTemplate.Name, false, false, true, null, groupTemplate.GetTypes());
-                CopyGroupToPackageDir(newGroup, packageName);
-                groupTemplate.ApplyToAddressableAssetGroup(newGroup);
-            }
-            else
-            {
-               var group = m_Editor.settings.CreateGroup("", false, false, false, null);
-                CopyGroupToPackageDir(group, packageName);
+                m_Editor.settings.CreateGroup("", false, false, false, null);
                 Reload();
             }
         }
@@ -1361,7 +1219,7 @@ namespace UnityEditor.AddressableAssets.GUI
                 bool allEntries = true;
                 foreach (var nodeId in GetSelection())
                 {
-                    var item = FindItemInVisibleRows(nodeId) as AssetEntryTreeViewItem;
+                    var item = FindItemInVisibleRows(nodeId);
                     if (item != null)
                     {
                         selectedNodes.Add(item);
@@ -1383,7 +1241,7 @@ namespace UnityEditor.AddressableAssets.GUI
             int resourcesCount = 0;
             foreach (var id in args.draggedItemIDs)
             {
-                var item = FindItemInVisibleRows(id) as AssetEntryTreeViewItem;
+                var item = FindItemInVisibleRows(id);
                 if (item != null)
                 {
                     if (item.entry != null)
@@ -1419,7 +1277,7 @@ namespace UnityEditor.AddressableAssets.GUI
             var selectedNodes = new List<AssetEntryTreeViewItem>();
             foreach (var id in args.draggedItemIDs)
             {
-                var item = FindItemInVisibleRows(id) as AssetEntryTreeViewItem;
+                var item = FindItemInVisibleRows(id);
                 if (item.entry != null || (item.parent == rootItem && item.@group != null))
                     selectedNodes.Add(item);
             }

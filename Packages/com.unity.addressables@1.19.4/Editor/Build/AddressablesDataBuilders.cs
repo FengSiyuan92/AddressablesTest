@@ -64,12 +64,4 @@ namespace UnityEditor.AddressableAssets.Build
     public class AddressablesPlayerBuildResult : AddressableAssetBuildResult
     {
     }
-
-    /// <summary>
-    /// build player apk
-    /// </summary>
-    public class AddressablesAPKBuildResult : AddressableAssetBuildResult
-    {
-
-    }
 }

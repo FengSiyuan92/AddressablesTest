@@ -58,10 +58,4 @@ namespace UnityEditor.AddressableAssets.Build
         /// </summary>
         void ClearCachedData();
     }
-
-
-    public interface IPackageBuilder
-    {
-        string Package { get; set; }
-    }
 }

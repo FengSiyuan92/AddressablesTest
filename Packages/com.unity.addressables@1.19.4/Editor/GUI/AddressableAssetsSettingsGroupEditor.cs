@@ -51,8 +51,6 @@ namespace UnityEditor.AddressableAssets.GUI
         float m_VerticalSplitterPercent;
         const int k_SplitterWidth = 3;
 
-
-
         public AddressableAssetsSettingsGroupEditor(AddressableAssetsWindow w)
         {
             window = w;
@@ -152,9 +150,6 @@ namespace UnityEditor.AddressableAssets.GUI
         [NonSerialized]
         Texture2D m_CogIcon;
 
-
-
-
         void TopToolbar(Rect toolbarPos)
         {
             if (m_SearchStyles == null)
@@ -174,8 +169,8 @@ namespace UnityEditor.AddressableAssets.GUI
 
             GUILayout.BeginHorizontal(EditorStyles.toolbar);
             {
-
                 float spaceBetween = 4f;
+
 
                 {
                     var guiMode = new GUIContent("Create");
@@ -186,25 +181,10 @@ namespace UnityEditor.AddressableAssets.GUI
                         foreach (var templateObject in settings.GroupTemplateObjects)
                         {
                             if (templateObject != null)
-                                menu.AddItem(new GUIContent("Group/" + templateObject.name), false, (context)=>
-                                {
-                                    m_EntryTree.CreateNewGroup(context, null);
-                                }, templateObject);
+                                menu.AddItem(new GUIContent("Group/" + templateObject.name), false, m_EntryTree.CreateNewGroup, templateObject);
                         }
                         menu.AddSeparator(string.Empty);
-                        //menu.AddItem(new GUIContent("Group/Blank (no schema)"), false, m_EntryTree.CreateNewGroup, null);
-
-
-                        // 增加创建gamepackage的功能
-                        DirectoryInfo dir = new DirectoryInfo(Application.dataPath + "/Project");
-                        var dirs = dir.GetDirectories();
-
-                        foreach (var gameDir in dirs)
-                        {
-                            if (gameDir != null)
-                                menu.AddItem(new GUIContent("New Project Package/" + gameDir.Name), false,
-                                    m_EntryTree.CreateNewPackage, gameDir.Name);
-                        }
+                        menu.AddItem(new GUIContent("Group/Blank (no schema)"), false, m_EntryTree.CreateNewGroup, null);
                         menu.DropDown(rMode);
                     }
                 }
@@ -276,20 +256,10 @@ namespace UnityEditor.AddressableAssets.GUI
                         if (m.CanBuildData<AddressablesPlayerBuildResult>())
                         {
                             AddressablesPlayerBuildResultBuilderExists = true;
-                            //menu.AddItem(new GUIContent("New Build/" + m.Name), false, OnBuildScript, i);
-
-                            // 增加build apk和buildpackage的功能
-                            menu.AddItem(new GUIContent("New Build/Build APK"), false, OnBuildApk, i);
-                            var packages = AddressableAssetSettingsDefaultObject.Settings.m_Packages;
-                            foreach (var package in packages)
-                            {
-                                if (package != null)
-                                    menu.AddItem(new GUIContent("New Build/Build Package->" + package), false,
-                                        OnBuildPackage, new object[] { i, package });
-                            }  
+                            menu.AddItem(new GUIContent("New Build/" + m.Name), false, OnBuildScript, i);
                         }
                     }
-                    // 添加构建apk选项
+
                     if (!AddressablesPlayerBuildResultBuilderExists)
                     {
                         menu.AddDisabledItem(new GUIContent("New Build/No Build Script Available"));
@@ -381,20 +351,6 @@ namespace UnityEditor.AddressableAssets.GUI
             OnBuildPlayerData();
         }
 
-        void OnBuildApk(object context)
-        {
-            OnSetActiveBuildScript(context);
-            AddressableAssetSettings.BuildApk();
-        }
-
-
-        void OnBuildPackage(object context)
-        {
-            object[] objects = context as object[];
-            OnSetActiveBuildScript(objects[0]);
-            AddressableAssetSettings.BuildPackage(objects[1].ToString());
-        }
-
         void OnBuildPlayerData()
         {
             AddressableAssetSettings.BuildPlayerContent();
@@ -461,7 +417,6 @@ namespace UnityEditor.AddressableAssets.GUI
         }
 
         bool m_ModificationRegistered;
-
         public void OnEnable()
         {
             if (AddressableAssetSettingsDefaultObject.Settings == null)
@@ -471,7 +426,6 @@ namespace UnityEditor.AddressableAssets.GUI
                 AddressableAssetSettingsDefaultObject.Settings.OnModification += OnSettingsModification;
                 m_ModificationRegistered = true;
             }
- 
         }
 
         public void OnDisable()

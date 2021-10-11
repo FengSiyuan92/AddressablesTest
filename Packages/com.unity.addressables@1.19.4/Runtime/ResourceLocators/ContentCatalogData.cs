@@ -18,10 +18,7 @@ namespace UnityEngine.AddressableAssets.ResourceLocators
         /// <summary>
         /// Internl id.
         /// </summary>
-        public string InternalId { get;
-            set;
-          
-        }
+        public string InternalId { get; set; }
         /// <summary>
         /// IResourceProvider identifier.
         /// </summary>

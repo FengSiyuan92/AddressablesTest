@@ -32,7 +32,7 @@ namespace UnityEditor.AddressableAssets.GUI
             }
         }
 
-        [MenuItem("Window/Asset Management/Addressables/Groups %#z", priority = 2050)]
+        [MenuItem("Window/Asset Management/Addressables/Groups %#Z", priority = 2050)]
         internal static void Init()
         {
             var window = GetWindow<AddressableAssetsWindow>();
@@ -95,7 +95,28 @@ namespace UnityEditor.AddressableAssets.GUI
                     AddressableAssetSettingsDefaultObject.Settings = AddressableAssetSettings.Create(AddressableAssetSettingsDefaultObject.kDefaultConfigFolder, AddressableAssetSettingsDefaultObject.kDefaultConfigAssetName, true, true);
                     OfferToConvert(AddressableAssetSettingsDefaultObject.Settings);
                 }
-     
+                //if (GUILayout.Button("Import Addressables Settings"))
+                //{
+                //    m_GroupEditor = null;
+                //    var path = EditorUtility.OpenFilePanel("Addressables Settings Object", AddressableAssetSettingsDefaultObject.kDefaultConfigFolder, "asset");
+                //    if (!string.IsNullOrEmpty(path))
+                //    {
+                //        var i = path.ToLower().IndexOf("/assets/");
+                //        if (i > 0)
+                //        {
+                //            path = path.Substring(i + 1);
+                //            Addressables.LogFormat("Loading Addressables Settings from {0}", path);
+                //            var obj = AssetDatabase.LoadAssetAtPath<AddressableAssetSettings>(path);
+                //            if (obj != null)
+                //                AddressableAssetSettingsDefaultObject.Settings = obj;
+                //            else
+                //                Debug.LogWarning("Unable to load asset settings from: "
+                //                                 + path
+                //                                 + "\nPlease ensure the location included in the project directory."
+                //                );
+                //        }
+                //    }
+                //}
                 GUILayout.Space(20);
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(50);

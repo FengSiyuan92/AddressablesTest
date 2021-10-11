@@ -80,10 +80,5 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
         /// A mapping of AssetBundle to the full dependency tree, flattened into a single list.
         /// </summary>
         public Dictionary<string, List<string>> bundleToExpandedBundleDependencies;
-
-        /// <summary>
-        /// 需要构建的package包名称
-        /// </summary>
-        public string ProjectPackage ;
     }
 }

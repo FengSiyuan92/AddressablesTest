@@ -7,7 +7,7 @@ using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Serialization;
-using System.Text.RegularExpressions;
+
 namespace UnityEditor.AddressableAssets.Settings
 {
     /// <summary>
@@ -20,6 +20,7 @@ namespace UnityEditor.AddressableAssets.Settings
         internal static GUIContent MoveSchemaUpContent = new GUIContent("Move Up", "Move schema up one in list.");
         internal static GUIContent MoveSchemaDownContent = new GUIContent("Move Down", "Move schema down one in list.");
         internal static GUIContent ExpandSchemaContent = new GUIContent("Expand All", "Expand all settings within schema.");
+
 
         [FormerlySerializedAs("m_name")]
         [SerializeField]
@@ -42,35 +43,6 @@ namespace UnityEditor.AddressableAssets.Settings
         [FormerlySerializedAs("m_schemaSet")]
         [SerializeField]
         AddressableAssetGroupSchemaSet m_SchemaSet = new AddressableAssetGroupSchemaSet();
-
-        // À˘ ÙgamePackage
-        [SerializeField]
-        string m_BelongProjectPackage;
-        public virtual string BelongProjectPackage
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(m_BelongProjectPackage))
-                {
-                    var path = AssetDatabase.GetAssetPath(this);
-                    var projectName = "Default";
-                    if (path.StartsWith("Assets/Project/", StringComparison.OrdinalIgnoreCase))
-                    {
-                        projectName = path.Substring("Assets/Project/".Length).Split('/')[0];
-                    }
-                    //Debug.Log("Init BelongProjectPackage Name = " + projectName);
-                    m_BelongProjectPackage = projectName;
-                }
-
-                return m_BelongProjectPackage;
-            }
-            set
-            {
-                m_BelongProjectPackage = value;
-            }
-        }
-
-
 
         Dictionary<string, AddressableAssetEntry> m_EntryMap = new Dictionary<string, AddressableAssetEntry>();
 

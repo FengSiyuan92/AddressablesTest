@@ -67,8 +67,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
         /// <typeparam name="TResult">The type of data to build.</typeparam>
         /// <param name="builderInput">The builderInput object used in the build.</param>
         /// <returns>The build data result.</returns>
-        public TResult BuildData<TResult>(AddressablesDataBuilderInput builderInput) 
-            where TResult : IDataBuilderResult
+        public TResult BuildData<TResult>(AddressablesDataBuilderInput builderInput) where TResult : IDataBuilderResult
         {
             if (!CanBuildData<TResult>())
             {
