@@ -1,6 +1,7 @@
 using System;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
+using System.Collections.Generic;
 using UnityEngine.Serialization;
 
 namespace UnityEditor.AddressableAssets
@@ -63,8 +64,10 @@ namespace UnityEditor.AddressableAssets
             if (settings != null)
                 AddressablesAssetPostProcessor.OnPostProcess = settings.OnPostprocessAllAssets;
             m_LoadingSettingsObject = false;
+
             return settings;
         }
+
 
         void SetSettingsObject(AddressableAssetSettings settings)
         {
@@ -99,10 +102,13 @@ namespace UnityEditor.AddressableAssets
             }
         }
 
-        /// <summary>
-        /// Gets the default addressable asset settings object.  This will return null during editor startup if EditorApplication.isUpdating or EditorApplication.isCompiling are true.
-        /// </summary>
-        public static AddressableAssetSettings Settings
+
+   
+
+/// <summary>
+/// Gets the default addressable asset settings object.  This will return null during editor startup if EditorApplication.isUpdating or EditorApplication.isCompiling are true.
+/// </summary>
+public static AddressableAssetSettings Settings
         {
             get
             {
@@ -112,6 +118,12 @@ namespace UnityEditor.AddressableAssets
                     if (EditorBuildSettings.TryGetConfigObject(kDefaultConfigObjectName, out so))
                     {
                         s_DefaultSettingsObject = so.LoadSettingsObject();
+
+                        if (s_DefaultSettingsObject != null)
+                        {
+                            s_DefaultSettingsObject.LoadAASettingPackages();
+                        }
+                      
                     }
                     else
                     {
@@ -153,6 +165,7 @@ namespace UnityEditor.AddressableAssets
                     EditorBuildSettings.AddConfigObject(kDefaultConfigObjectName, so, true);
                 }
                 so.SetSettingsObject(s_DefaultSettingsObject);
+                s_DefaultSettingsObject.LoadAASettingPackages();
                 EditorUtility.SetDirty(so);
                 AddressableAssetUtility.OpenAssetIfUsingVCIntegration(kDefaultConfigFolder + "/DefaultObject.asset");
                 AssetDatabase.SaveAssets();

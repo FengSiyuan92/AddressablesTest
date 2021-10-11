@@ -27,4 +27,4 @@ MonoBehaviour:
     m_Schemas:
     - {fileID: 11400000, guid: 824ac9fecde9816488fecf005aa14491, type: 2}
     - {fileID: 11400000, guid: 2da12865f15bf514bacdff8736a08202, type: 2}
-  m_BelongProjectPackage: Game1
+  m_PackageName: Game1

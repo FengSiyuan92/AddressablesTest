@@ -15,16 +15,12 @@ MonoBehaviour:
   m_GroupName: Default Local Group
   m_Data:
     m_SerializedData: []
-  m_GUID: ea2537ba9193c03449be2455f469c06c
-  m_SerializeEntries:
-  - m_GUID: 53af56270ff161148a9e54397e44164d
-    m_Address: Assets/Project/SDK/sdk.lua.txt
-    m_ReadOnly: 0
-    m_SerializedLabels: []
+  m_GUID: 3d0c304fb1f1a42478cf665861ab2887
+  m_SerializeEntries: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: b273ccb02a3f8b34c86412a0c17e3f14, type: 2}
   m_SchemaSet:
     m_Schemas:
     - {fileID: 11400000, guid: e0fd38776e30eeb45b4ac980ccea21ff, type: 2}
     - {fileID: 11400000, guid: c5d3404a96bee734dbd829c6f0d07cde, type: 2}
-  m_BelongProjectPackage: Default
+  m_PackageName: APK Package

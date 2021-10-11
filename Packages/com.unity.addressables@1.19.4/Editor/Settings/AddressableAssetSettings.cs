@@ -347,6 +347,10 @@ namespace UnityEditor.AddressableAssets.Settings
             }
         }
 
+        public const string DefaultAPKPackageName = "APK Package";
+        [SerializeField]
+        public string[] Packages;
+   
         /// <summary>
         /// Event for handling settings changes.  The object passed depends on the event type.
         /// </summary>
@@ -1388,6 +1392,22 @@ namespace UnityEditor.AddressableAssets.Settings
             return AssetDatabase.LoadAssetAtPath<T>(path);
         }
 
+        public void LoadAASettingPackages()
+        {
+            //modify by fengsiyuan 2021.10.11 -- init package defines ----begin
+            HashSet<string> containsPackageNames = new HashSet<string>();
+            foreach (var item in groups)
+            {
+                string checkPackageName = item.PackageName;
+                // give a default package name by save path
+                containsPackageNames.Add(string.IsNullOrEmpty(checkPackageName) ? RequestGroupDefaultPackageName(item) : checkPackageName);
+            }
+            Packages = new string[containsPackageNames.Count];
+            containsPackageNames.CopyTo(Packages);
+            System.Array.Sort(Packages);
+            //modify by fengsiyuan 2021.10.11 -- init package defines ----end
+        }
+
         /// <summary>
         /// The default name of the built in player data AddressableAssetGroup
         /// </summary>
@@ -2060,12 +2080,24 @@ namespace UnityEditor.AddressableAssets.Settings
             AddressableAssetUtility.OpenAssetIfUsingVCIntegration(this);
         }
 
+        internal static string RequestGroupDefaultPackageName(AddressableAssetGroup group)
+        {
+            var groupSettingSavePath = AssetDatabase.GetAssetPath(group);
+            var dirPart = groupSettingSavePath.Split('/');
+            // 0Asset 1Project 2 belong GameName or 0Asset 1AddressablesAssetsData 2AssetGroups
+            var target = dirPart[2];
+            return target == "AssetGroups" ? DefaultAPKPackageName : target;
+        }
+
         internal void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
             List<string> assetEntryCollections = new List<string>();
             var aa = this;
             bool relatedAssetChanged = false;
             bool settingsChanged = false;
+
+            List<string> newPackageChecks = new List<string>();
+
             foreach (string str in importedAssets)
             {
                 var assetType = AssetDatabase.GetMainAssetTypeAtPath(str);
@@ -2087,6 +2119,19 @@ namespace UnityEditor.AddressableAssets.Settings
                             group = aa.FindGroup(Path.GetFileNameWithoutExtension(str));
                             relatedAssetChanged = true;
                             settingsChanged = true;
+                            // modify by fengsiyuan  2021-10-11
+                            if (string.IsNullOrEmpty(group.PackageName))
+                            {
+                                group.PackageName = RequestGroupDefaultPackageName(group);
+                                EditorUtility.SetDirty(group);
+                                AssetDatabase.SaveAssets();
+                            }
+                      
+                            if (Packages!= null && !Packages.Contains(group.PackageName))
+                            {
+                                Packages = Packages.Union(new string[] { group.PackageName }).ToArray();
+                            }
+                            // modify by fengsiyuan  2021-10-11    ---end
                         }
                     }
                     if (group != null)
@@ -2106,6 +2151,7 @@ namespace UnityEditor.AddressableAssets.Settings
                     relatedAssetChanged = true;
             }
 
+           
             if (assetEntryCollections.Count > 0)
                 relatedAssetChanged = ConvertAssetEntryCollectionsWithPermissionRequest(assetEntryCollections) || relatedAssetChanged;
 

@@ -22,9 +22,9 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
   m_ReadOnly: 0
-  m_Settings: {fileID: 11400000, guid: b273ccb02a3f8b34c86412a0c17e3f14, type: 2}
+  m_Settings: {fileID: 0}
   m_SchemaSet:
     m_Schemas:
     - {fileID: 11400000, guid: be2e67c830aa08d408fe9710a19ba5ed, type: 2}
     - {fileID: 11400000, guid: 8e08319cf37f62d41a80b7875a87d80e, type: 2}
-  m_BelongProjectPackage: Game2
+  m_PackageName: Game2

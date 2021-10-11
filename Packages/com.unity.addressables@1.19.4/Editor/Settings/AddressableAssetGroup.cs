@@ -44,6 +44,17 @@ namespace UnityEditor.AddressableAssets.Settings
         [SerializeField]
         AddressableAssetGroupSchemaSet m_SchemaSet = new AddressableAssetGroupSchemaSet();
 
+       
+        [SerializeField]
+        string m_PackageName;
+      
+        public string PackageName
+        {
+            get { return m_PackageName; }
+
+            set { m_PackageName = value; }
+        }
+
         Dictionary<string, AddressableAssetEntry> m_EntryMap = new Dictionary<string, AddressableAssetEntry>();
 
         /// <summary>

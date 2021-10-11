@@ -9,7 +9,7 @@ using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Serialization;
-
+using System.Linq;
 // ReSharper disable DelegateSubtraction
 
 namespace UnityEditor.AddressableAssets.GUI
@@ -173,20 +173,40 @@ namespace UnityEditor.AddressableAssets.GUI
 
 
                 {
-                    var guiMode = new GUIContent("Create");
+                    // modify by fengsiyuan, remove the  Group/Blank (no schema), append create package
+                    //var guiMode = new GUIContent("Create");
+                    //Rect rMode = GUILayoutUtility.GetRect(guiMode, EditorStyles.toolbarDropDown);
+                    //if (EditorGUI.DropdownButton(rMode, guiMode, FocusType.Passive, EditorStyles.toolbarDropDown))
+                    //{
+                    //    var menu = new GenericMenu();
+                    //    foreach (var templateObject in settings.GroupTemplateObjects)
+                    //    {
+                    //        if (templateObject != null)
+                    //            menu.AddItem(new GUIContent("Group/" + templateObject.name), false, m_EntryTree.CreateNewGroup, templateObject);
+                    //    }
+                    //    menu.AddSeparator(string.Empty);
+                    //    menu.AddItem(new GUIContent("Group/Blank (no schema)"), false, m_EntryTree.CreateNewGroup, null);
+
+
+                    //    menu.DropDown(rMode);
+                    //}
+
+                    var guiMode = new GUIContent("New Package");
                     Rect rMode = GUILayoutUtility.GetRect(guiMode, EditorStyles.toolbarDropDown);
                     if (EditorGUI.DropdownButton(rMode, guiMode, FocusType.Passive, EditorStyles.toolbarDropDown))
                     {
+
+                        DirectoryInfo dir = new DirectoryInfo(Application.dataPath + "/Project");
+                        var dirs = dir.GetDirectories();
                         var menu = new GenericMenu();
-                        foreach (var templateObject in settings.GroupTemplateObjects)
+                        foreach (var gameDir in dirs)
                         {
-                            if (templateObject != null)
-                                menu.AddItem(new GUIContent("Group/" + templateObject.name), false, m_EntryTree.CreateNewGroup, templateObject);
+                            if (gameDir != null)
+                                menu.AddItem(new GUIContent(gameDir.Name), false, CreateNewPackage, gameDir.Name);
                         }
-                        menu.AddSeparator(string.Empty);
-                        menu.AddItem(new GUIContent("Group/Blank (no schema)"), false, m_EntryTree.CreateNewGroup, null);
                         menu.DropDown(rMode);
                     }
+                    // modify by fengsiyuan, remove the  Group/Blank (no schema), append create package --end
                 }
 
                 CreateProfileDropdown();
@@ -276,6 +296,10 @@ namespace UnityEditor.AddressableAssets.GUI
                     menu.AddItem(new GUIContent("Clean Build/Build Pipeline Cache"), false, OnCleanSBP);
                     menu.DropDown(rBuild);
                 }
+        
+
+
+
 
 #if (ENABLE_CCD && UNITY_2019_4_OR_NEWER)
                 //Build & Release 
@@ -317,6 +341,19 @@ namespace UnityEditor.AddressableAssets.GUI
             OnCleanSBP();
         }
 
+        void CreateNewPackage(object context)
+        {
+            var packageName = context.ToString();
+            while (Array.IndexOf(m_Settings.Packages, packageName) != -1)
+            {
+                var com = packageName.Split('-');
+                var num = com.Length > 1 ? int.Parse(com[1]) : 0;
+                num += 1;
+                packageName = com[0] + "-" + num;
+            }
+            m_Settings.Packages = m_Settings.Packages.Union(new string[] { packageName }).ToArray();
+            Reload();
+        }
         void OnCleanAddressables(object builder)
         {
             AddressableAssetSettings.CleanPlayerContent(builder as IDataBuilder);

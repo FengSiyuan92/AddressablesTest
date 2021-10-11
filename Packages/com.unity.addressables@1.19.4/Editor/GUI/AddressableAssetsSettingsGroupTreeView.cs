@@ -15,13 +15,21 @@ namespace UnityEditor.AddressableAssets.GUI
 {
     using Object = UnityEngine.Object;
 
+
+
+
+
     internal class AddressableAssetEntryTreeView : TreeView
     {
         AddressableAssetsSettingsGroupEditor m_Editor;
         internal string customSearchString = string.Empty;
         string m_FirstSelectedGroup;
+        string m_SelectPackage;
+        Dictionary<string, TreeViewItem> m_packageRoot = new Dictionary<string, TreeViewItem>();
+
         private readonly Dictionary<AssetEntryTreeViewItem, bool> m_SearchedEntries = new Dictionary<AssetEntryTreeViewItem, bool>();
         private bool m_ForceSelectionClear = false;
+
 
         enum ColumnId
         {
@@ -38,6 +46,8 @@ namespace UnityEditor.AddressableAssets.GUI
             ColumnId.Labels
         };
 
+
+ 
         internal AddressableAssetEntryTreeView(AddressableAssetSettings settings)
             : this(new TreeViewState(), CreateDefaultMultiColumnHeaderState(), new AddressableAssetsSettingsGroupEditor(ScriptableObject.CreateInstance<AddressableAssetsWindow>()))
         {
@@ -84,6 +94,20 @@ namespace UnityEditor.AddressableAssets.GUI
             }
         }
 
+
+        PackageTreeItem GetPackageItem(int id)
+        {
+            var rows = GetRows();
+            foreach (var r in rows)
+            {
+                if (r.id == id)
+                {
+                    return r as PackageTreeItem;
+                }
+            }
+            return null;
+        }
+
         protected override void SelectionChanged(IList<int> selectedIds)
         {
             if (selectedIds.Count == 1)
@@ -92,6 +116,12 @@ namespace UnityEditor.AddressableAssets.GUI
                 if (item != null && item.group != null)
                 {
                     m_FirstSelectedGroup = item.group.name;
+                }
+
+                var packageItem = GetPackageItem(selectedIds[0]);
+                if (packageItem!= null)
+                {
+                    m_SelectPackage = packageItem.displayName;
                 }
             }
 
@@ -127,13 +157,33 @@ namespace UnityEditor.AddressableAssets.GUI
             Selection.objects = selectedObjects; // change selection
         }
 
+        internal TreeViewItem GetPackageRoot(string packageName)
+        {
+            TreeViewItem defaultItem = null;
+            m_packageRoot.TryGetValue(packageName, out defaultItem);
+            return defaultItem;
+        }
+
         protected override TreeViewItem BuildRoot()
         {
             var root = new TreeViewItem(-1, -1);
+
+            // modify by fengsiyuan 2021 -10 -11  create package drawer
+            m_packageRoot.Clear();
+            foreach (var item in m_Editor.settings.Packages)
+            {
+                var packageRoot = new PackageTreeItem(item.GetHashCode(), 0, item);
+       
+                packageRoot.icon = Resources.Load<Texture2D>("AddressableAssetsIconY1756Basic");
+                root.AddChild(packageRoot);
+                m_packageRoot.Add(item, packageRoot);
+            }
+     
             using (new AddressablesFileEnumerationScope(BuildAddressableTree(m_Editor.settings)))
             {
                 foreach (var group in m_Editor.settings.groups)
-                    AddGroupChildrenBuild(group, root);
+                    //AddGroupChildrenBuild(group, root);  // modify by fengsiyuan 2021 -10 -11 
+                    AddGroupChildrenBuild(group, GetPackageRoot(group.PackageName));
             }
             return root;
         }
@@ -378,7 +428,7 @@ namespace UnityEditor.AddressableAssets.GUI
 
         void AddGroupChildrenBuild(AddressableAssetGroup group, TreeViewItem root)
         {
-            int depth = 0;
+            int depth = 1;
 
             AssetEntryTreeViewItem groupItem = null;
             if (ProjectConfigData.ShowGroupsAsHierarchy && group != null)
@@ -406,7 +456,7 @@ namespace UnityEditor.AddressableAssets.GUI
             }
             else
             {
-                groupItem = new AssetEntryTreeViewItem(group, 0);
+                groupItem = new AssetEntryTreeViewItem(group, depth);
                 root.AddChild(groupItem);
             }
 
@@ -695,6 +745,13 @@ namespace UnityEditor.AddressableAssets.GUI
                 if (isActualRename)
                     assetItem.isRenaming = !string.IsNullOrEmpty(result);
             }
+
+            var packageItem = item as PackageTreeItem;
+            if (assetItem != null)
+            {
+                result = "Rename";
+            }
+
             return result;
         }
 
@@ -762,6 +819,16 @@ namespace UnityEditor.AddressableAssets.GUI
 
         protected override bool CanMultiSelect(TreeViewItem item)
         {
+            if (item is PackageTreeItem)
+            {
+                return false;
+            }
+
+            if (GetSelection().Where(i=>GetPackageItem(i)!= null).Count() != 0)
+            {
+                return false;
+            }
+
             return true;
         }
 
@@ -819,6 +886,27 @@ namespace UnityEditor.AddressableAssets.GUI
             AddressableAssetSettings.InvokeAssetEntryCommand(d.Item1, d.Item2.Select(s => s.entry));
         }
 
+        void CheckClickPackage(int id)
+        {
+            PackageTreeItem item = null;
+            var rows = GetRows();
+            foreach (var r in rows)
+            {
+                if (r.id == id)
+                {
+                    item = r as PackageTreeItem;
+                    break;
+                }
+            }
+
+            if (item == null)
+            {
+                return;
+            }
+
+            // TODO: rename or other operation
+
+        }
         protected override void ContextClickedItem(int id)
         {
             List<AssetEntryTreeViewItem> selectedNodes = new List<AssetEntryTreeViewItem>();
@@ -826,10 +914,30 @@ namespace UnityEditor.AddressableAssets.GUI
             {
                 var item = FindItemInVisibleRows(nodeId); //TODO - this probably makes off-screen but selected items not get added to list.
                 if (item != null)
+                {
                     selectedNodes.Add(item);
+                    TreeViewItem parent = item.parent;
+                    while(parent != null)
+                    {
+                        if (parent is PackageTreeItem)
+                        {
+                            m_SelectPackage = parent.displayName;
+                            break;
+                        }
+                        else
+                        {
+                            parent = parent.parent;
+                        }
+                        
+                    }
+                }
+
             }
             if (selectedNodes.Count == 0)
+            {
+                CheckClickPackage(id);
                 return;
+            }
 
             m_ContextOnItem = true;
 
@@ -1495,6 +1603,14 @@ namespace UnityEditor.AddressableAssets.GUI
             return AssetDatabase.GetMainAssetTypeAtPath(path) == typeof(AddressableAssetGroup);
         }
     }
+
+
+    class PackageTreeItem : TreeViewItem
+    {
+        public PackageTreeItem(int id, int depth, string displayName) : base(id, depth, displayName) { }
+
+    }
+
 
     class AssetEntryTreeViewItem : TreeViewItem
     {

@@ -15,7 +15,7 @@ MonoBehaviour:
   m_GroupName: Built In Data
   m_Data:
     m_SerializedData: []
-  m_GUID: f95cc2e65addad34584c80268c79668d
+  m_GUID: 167ba5af7e5374d43862580746330290
   m_SerializeEntries:
   - m_GUID: Resources
     m_Address: Resources
@@ -30,4 +30,4 @@ MonoBehaviour:
   m_SchemaSet:
     m_Schemas:
     - {fileID: 11400000, guid: 88a3b4307d6d7da4383b99aeb74476e3, type: 2}
-  m_BelongProjectPackage: 
+  m_PackageName: APK Package
