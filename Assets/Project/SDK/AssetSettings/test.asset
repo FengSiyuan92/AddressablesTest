@@ -10,21 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: Packed Assets2
+  m_Name: test
   m_EditorClassIdentifier: 
-  m_GroupName: Packed Assets2
+  m_GroupName: test
   m_Data:
     m_SerializedData: []
-  m_GUID: d7281817813797f459b098a16b773b9d
-  m_SerializeEntries:
-  - m_GUID: a0f4ac3d8f6e11445bb7a39c91878c57
-    m_Address: com
-    m_ReadOnly: 0
-    m_SerializedLabels: []
+  m_GUID: 3adea2c9f68a24e4c96e5e895cef3b82
+  m_SerializeEntries: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: b273ccb02a3f8b34c86412a0c17e3f14, type: 2}
   m_SchemaSet:
     m_Schemas:
-    - {fileID: 11400000, guid: ba00d8a12512e17498e99a9154025699, type: 2}
-    - {fileID: 11400000, guid: cee8b3802cefb6049a65bbe340cd63e7, type: 2}
-  m_PackageName: Game2
+    - {fileID: 11400000, guid: 09875ccdcfecf0746bfde6c3bbb0a46d, type: 2}
+    - {fileID: 11400000, guid: 2448d843736d62341bc7bf2a80e4ae5a, type: 2}
+  m_PackageName: SDK

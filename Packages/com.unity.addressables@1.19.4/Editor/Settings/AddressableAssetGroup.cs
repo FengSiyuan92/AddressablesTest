@@ -108,6 +108,7 @@ namespace UnityEditor.AddressableAssets.Settings
                                 }
                             }
                         }
+
                     }
                     else
                     {
@@ -119,6 +120,70 @@ namespace UnityEditor.AddressableAssets.Settings
                 }
             }
         }
+
+
+
+        internal void Rename(string input)
+        {
+            var newName = input;
+            newName = newName.Replace('/', '-');
+            newName = newName.Replace('\\', '-');
+            if (input != newName)
+                Debug.Log("Group names cannot include '\\' or '/'.  Replacing with '-'. " + m_GroupName);
+            if (m_GroupName != newName)
+            {
+                string previousName = m_GroupName;
+
+                string guid;
+                long localId;
+                if (AssetDatabase.TryGetGUIDAndLocalFileIdentifier(this, out guid, out localId))
+                {
+                    var path = AssetDatabase.GUIDToAssetPath(guid);
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        var folder = Path.GetDirectoryName(path);
+                        var extension = Path.GetExtension(path);
+                        var newPath = $"{folder}/{newName}{extension}".Replace('\\', '/');
+                        if (path != newPath)
+                        {
+                            var setPath = AssetDatabase.MoveAsset(path, newPath);
+                       
+                            if (string.IsNullOrEmpty(setPath))
+                            {
+                                name = m_GroupName = newName;
+                                if (Schemas != null && Schemas.Count != 0)
+                                {
+                                    foreach (var item in Schemas)
+                                    {
+                                        if (item == null) continue;
+                                        var schemaPath = AssetDatabase.GetAssetPath(item);
+                                        var schemaFolder = Path.GetDirectoryName(schemaPath);
+                                        var schemaExtension = Path.GetExtension(schemaPath);
+                                        var schemaNewPath = $"{schemaFolder}/{newName}_{item.GetType().Name}{schemaExtension}".Replace('\\', '/');
+                                        AssetDatabase.MoveAsset(schemaPath, schemaNewPath);
+
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                Debug.LogError("Rename of Group failed. " + setPath);
+                                name = m_GroupName = previousName;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    //this isn't a valid asset, which means it wasn't persisted, so just set the object name to the desired display name.
+                    name = m_GroupName = newName;
+                }
+
+                SetDirty(AddressableAssetSettings.ModificationEvent.GroupRenamed, this, true, true);
+            }
+
+        }
+
         /// <summary>
         /// The group GUID.
         /// </summary>

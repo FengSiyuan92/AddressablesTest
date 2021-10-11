@@ -182,8 +182,9 @@ namespace UnityEditor.AddressableAssets.GUI
             using (new AddressablesFileEnumerationScope(BuildAddressableTree(m_Editor.settings)))
             {
                 foreach (var group in m_Editor.settings.groups)
-                    //AddGroupChildrenBuild(group, root);  // modify by fengsiyuan 2021 -10 -11 
-                    AddGroupChildrenBuild(group, GetPackageRoot(group.PackageName));
+                    if (group != null)
+                        //AddGroupChildrenBuild(group, root);  // modify by fengsiyuan 2021 -10 -11 
+                        AddGroupChildrenBuild(group, GetPackageRoot(group.PackageName));
             }
             return root;
         }
@@ -808,7 +809,8 @@ namespace UnityEditor.AddressableAssets.GUI
                     }
                     else
                     {
-                        item.group.Name = args.newName;
+                        item.group.Rename(args.newName);
+                
                         AddressableAssetUtility.OpenAssetIfUsingVCIntegration(item.group, true);
                         AddressableAssetUtility.OpenAssetIfUsingVCIntegration(item.group.Settings, true);
                     }
@@ -1166,17 +1168,22 @@ namespace UnityEditor.AddressableAssets.GUI
         internal void CreateNewGroup(object context)
         {
             var groupTemplate = context as AddressableAssetGroupTemplate;
+            AddressableAssetGroup result = null;
             if (groupTemplate != null)
             {
-                AddressableAssetGroup newGroup = m_Editor.settings.CreateGroup(groupTemplate.Name, false, false, true, null, groupTemplate.GetTypes());
-                groupTemplate.ApplyToAddressableAssetGroup(newGroup);
+                result = m_Editor.settings.CreateGroup(groupTemplate.Name, false, false, true, null, groupTemplate.GetTypes());
+                groupTemplate.ApplyToAddressableAssetGroup(result);
             }
             else
             {
-                m_Editor.settings.CreateGroup("", false, false, false, null);
+                result = m_Editor.settings.CreateGroup("", false, false, false, null);
                 Reload();
             }
+
+            m_Editor.settings.MoveAssetGroupToPackageDir(result, m_SelectPackage);
         }
+
+
 
         internal void SetGroupAsDefault(object context)
         {

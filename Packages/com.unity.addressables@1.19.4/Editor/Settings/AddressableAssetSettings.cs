@@ -1394,10 +1394,23 @@ namespace UnityEditor.AddressableAssets.Settings
 
         public void LoadAASettingPackages()
         {
+
+            //DirectoryInfo dir = new DirectoryInfo(Application.dataPath + "/Project");
+            //var dirs = dir.GetDirectories();
+            //var pre = Application.dataPath.Length;
+            //foreach (var item in dirs)
+            //{
+            //    var targetPath = $"Assets{item.FullName.Replace("\\", "/").Substring(pre)}";
+            //    AssetDatabase.Refresh(targetPath, ImportAssetOptions.ForceUpdate);
+            //}
+
+
             //modify by fengsiyuan 2021.10.11 -- init package defines ----begin
             HashSet<string> containsPackageNames = new HashSet<string>();
             foreach (var item in groups)
             {
+                if (item == null) continue;
+   
                 string checkPackageName = item.PackageName;
                 // give a default package name by save path
                 containsPackageNames.Add(string.IsNullOrEmpty(checkPackageName) ? RequestGroupDefaultPackageName(item) : checkPackageName);
@@ -1997,6 +2010,40 @@ namespace UnityEditor.AddressableAssets.Settings
             AddressableAssetUtility.OpenAssetIfUsingVCIntegration(this);
             return group;
         }
+
+
+        public void MoveAssetGroupToPackageDir(AddressableAssetGroup group, string packageName)
+        {
+            var currentpath = AssetDatabase.GetAssetPath(group);
+            var gameName = packageName.Split('-')[0];
+            var fileName = Path.GetFileName(currentpath);
+            var targetDir = $"{Application.dataPath}/Project/{gameName}/AssetSettings";
+            if (!Directory.Exists(targetDir))
+            {
+                Directory.CreateDirectory(targetDir);
+
+            }
+            group.PackageName = packageName;
+            EditorUtility.SetDirty(group);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            AssetDatabase.MoveAsset(currentpath, $"Assets/Project/{gameName}/AssetSettings/{fileName}");
+
+            if (group.Schemas!=null &&group.Schemas.Count!=0)
+            {
+                foreach (var item in group.Schemas)
+                {
+                    if (item == null) continue;
+                    var schemaPath = AssetDatabase.GetAssetPath(item);
+                    AssetDatabase.MoveAsset(schemaPath, $"Assets/Project/{gameName}/AssetSettings/{Path.GetFileName(schemaPath)}");
+                }
+            }
+
+            AssetDatabase.Refresh();
+
+        }
+
 
         internal string FindUniqueGroupName(string potentialName)
         {

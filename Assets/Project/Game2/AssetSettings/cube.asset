@@ -10,17 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: Default Local Group
+  m_Name: cube
   m_EditorClassIdentifier: 
-  m_GroupName: Default Local Group
+  m_GroupName: cube
   m_Data:
     m_SerializedData: []
-  m_GUID: a6a7f47b0744714489634997b9082514
-  m_SerializeEntries: []
+  m_GUID: d7281817813797f459b098a16b773b9d
+  m_SerializeEntries:
+  - m_GUID: c62100bb699aa5e40a2e642d4a635047
+    m_Address: Cube
+    m_ReadOnly: 0
+    m_SerializedLabels: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: b273ccb02a3f8b34c86412a0c17e3f14, type: 2}
   m_SchemaSet:
     m_Schemas:
-    - {fileID: 11400000, guid: 9f784d6ff37e6e141a1b39004a20c6ed, type: 2}
-    - {fileID: 11400000, guid: 05b7ab3ffe90f8149ab1b05342447a5c, type: 2}
-  m_PackageName: APK Package
+    - {fileID: 11400000, guid: ba00d8a12512e17498e99a9154025699, type: 2}
+    - {fileID: 11400000, guid: cee8b3802cefb6049a65bbe340cd63e7, type: 2}
+  m_PackageName: Game2
