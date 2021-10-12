@@ -1,6 +1,7 @@
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace UnityEditor.AddressableAssets.Build
 {
@@ -57,6 +58,27 @@ namespace UnityEditor.AddressableAssets.Build
         /// null in standard builds.  This is only set during content update builds.
         /// </summary>
         public AddressablesContentState PreviousContentState { get; internal set; }
+
+
+        public string TargetPackage;
+
+
+        string m_OutputBuildPath;
+        public string OutputBuildPath
+        {
+            get
+            {
+                if (m_OutputBuildPath == null)
+                {
+                    var dirVersionSuffix = PlayerVersion;
+                    m_OutputBuildPath =$"{Addressables.LibraryPath}/{PlatformMappingService.GetPlatformPathSubFolder()}/{dirVersionSuffix}" ;// 
+                    //var ori = Addressables.BuildPath + dirVersionSuffix; ;
+              
+                }
+                return m_OutputBuildPath;
+            }
+        }
+
 
 
         /// <summary>

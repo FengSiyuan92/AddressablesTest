@@ -225,7 +225,7 @@ namespace UnityEditor.AddressableAssets.GUI
                         });
                         menu.AddItem(new GUIContent("Check for Content Update Restrictions"), false, OnPrepareUpdate);
                         
-                        menu.AddItem(new GUIContent("Window/Profiles"), false, () => EditorWindow.GetWindow<ProfileWindow>().Show(true));
+                        menu.AddItem(new GUIContent("Window/GameBuildCreate"), false, () => EditorWindow.GetWindow<ProfileWindow>().Show(true));
                         menu.AddItem(new GUIContent("Window/Labels"), false, () => EditorWindow.GetWindow<LabelWindow>(true).Intialize(settings));
                         menu.AddItem(new GUIContent("Window/Analyze"), false, AnalyzeWindow.ShowWindow);
                         menu.AddItem(new GUIContent("Window/Hosting Services"), false, () => EditorWindow.GetWindow<HostingServicesWindow>().Show(settings));
@@ -244,7 +244,39 @@ namespace UnityEditor.AddressableAssets.GUI
                 }
 
                 GUILayout.FlexibleSpace();
+
+
+                // modify by fsy
+                // register self build logic 
                 GUILayout.Space(spaceBetween * 2f);
+                {
+                    var guiAPK = new GUIContent("BuildAPK");
+                    Rect rApk = GUILayoutUtility.GetRect(guiAPK, EditorStyles.toolbarDropDown);
+                    if (EditorGUI.DropdownButton(rApk, guiAPK, FocusType.Passive, EditorStyles.toolbarDropDown))
+                    {
+                        var menu = new GenericMenu();
+                        for (int i = 0; i < settings.DataBuilders.Count; i++)
+                        {
+                            var m = settings.GetDataBuilder(i);
+                            if (m.CanBuildData<AddressablesAPKBuildResult>())
+                            {
+                                menu.AddItem(new GUIContent("New Build/APK"), false, BuildApk, i);
+                            }
+                            if (m.CanBuildData<AddressablesPackageUpdateResult>())
+                            {
+                                foreach (var item in settings.Packages)
+                                {
+                                    menu.AddItem(new GUIContent("Update/" + item), false, UpdatePackage, new object[] { i, item});
+                                }
+                               
+                            }
+                        }
+                        menu.DropDown(rApk);
+
+                    }
+                }
+
+
 
                 {
                     GUILayout.Space(8);
@@ -263,6 +295,7 @@ namespace UnityEditor.AddressableAssets.GUI
                     }
                 }
 
+             
                 var guiBuild = new GUIContent("Build");
                 Rect rBuild = GUILayoutUtility.GetRect(guiBuild, EditorStyles.toolbarDropDown);
                 if (EditorGUI.DropdownButton(rBuild, guiBuild, FocusType.Passive, EditorStyles.toolbarDropDown))
@@ -382,6 +415,24 @@ namespace UnityEditor.AddressableAssets.GUI
         }
 #endif
 
+
+        public void BuildApk(object context)
+        {
+            var a = 0;
+            OnSetActiveBuildScript(context);
+            AddressableAssetSettings.BuildApkContent(out AddressablesAPKBuildResult rst);
+        }
+
+
+        public void UpdatePackage(object context)
+        {
+            var param = context as object[];
+            var index = param[0];
+            var packageName = param[1];
+            var a = 0;
+        }
+
+
         void OnBuildScript(object context)
         {
             OnSetActiveBuildScript(context);
@@ -426,7 +477,7 @@ namespace UnityEditor.AddressableAssets.GUI
                 settings.activeProfileId = null; //this will reset it to default.
                 activeProfileName = settings.profileSettings.GetProfileName(settings.activeProfileId);
             }
-            var profileButton = new GUIContent("Profile: " + activeProfileName);
+            var profileButton = new GUIContent("Game: " + activeProfileName);
 
             Rect r = GUILayoutUtility.GetRect(profileButton, m_ButtonStyle, GUILayout.Width(115f));
             if (EditorGUI.DropdownButton(r, profileButton, FocusType.Passive, EditorStyles.toolbarDropDown))

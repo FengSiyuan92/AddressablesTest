@@ -46,6 +46,8 @@ namespace UnityEditor.AddressableAssets.Settings
     /// </summary>
     public class AddressableAssetSettings : ScriptableObject
     {
+
+        public static string TestAPKOutputPath = "D:\\Addressables\\Library\\com.unity.addressables\\Windows\\1_0_0_0\\Basic";
         [InitializeOnLoadMethod]
         static void RegisterWithAssetPostProcessor()
         {
@@ -425,6 +427,9 @@ namespace UnityEditor.AddressableAssets.Settings
         [SerializeField]
         int m_maxConcurrentWebRequests = 500;
 
+        [NonSerialized]
+        public string CurrentBuildPackage;
+     
         /// <summary>
         /// The maximum time to download hash and json catalog files before a timeout error.
         /// </summary>
@@ -789,6 +794,21 @@ namespace UnityEditor.AddressableAssets.Settings
         public List<ScriptableObject> GroupTemplateObjects
         {
             get { return m_GroupTemplateObjects; }
+        }
+
+        public string GetPathByKey(string key)
+        {
+            var data = profileSettings. GetProfileDataByName(key);
+            var value = profileSettings.GetValueById(activeProfileId, data.Id);
+            var path = profileSettings.EvaluateString(activeProfileId, value);
+            return path;
+        }
+
+        public string GetValueByKey(string key)
+        {
+            var data = profileSettings.GetProfileDataByName(key);
+            var value = profileSettings.GetValueById(activeProfileId, data.Id);
+            return value;
         }
 
         /// <summary>
@@ -1370,6 +1390,12 @@ namespace UnityEditor.AddressableAssets.Settings
                 m_DataBuilders.Add(CreateScriptAsset<BuildScriptVirtualMode>());
                 m_DataBuilders.Add(CreateScriptAsset<BuildScriptPackedPlayMode>());
                 m_DataBuilders.Add(CreateScriptAsset<BuildScriptPackedMode>());
+
+                m_DataBuilders.Add(CreateScriptAsset<BuildAPKPackedMode>());
+                //m_DataBuilders.Add(CreateScriptAsset<BuildPackageUpdateMode>());
+
+
+
             }
 
             if (ActivePlayerDataBuilder != null && !ActivePlayerDataBuilder.CanBuildData<AddressablesPlayerBuildResult>())
@@ -2593,6 +2619,33 @@ namespace UnityEditor.AddressableAssets.Settings
             result = settings.BuildPlayerContentImpl();
         }
 
+
+
+
+        public static void BuildApkContent(out AddressablesAPKBuildResult result)
+        {
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
+            if (settings == null)
+            {
+                string error;
+                if (EditorApplication.isUpdating)
+                    error = "Addressable Asset Settings does not exist.  EditorApplication.isUpdating was true.";
+                else if (EditorApplication.isCompiling)
+                    error = "Addressable Asset Settings does not exist.  EditorApplication.isCompiling was true.";
+                else
+                    error = "Addressable Asset Settings does not exist.  Failed to create.";
+                Debug.LogError(error);
+                result = new AddressablesAPKBuildResult();
+                result.Error = error;
+                return;
+            }
+
+            NullifyBundleFileIds(settings);
+
+            result = settings.BuildApkContentImpl();
+        }
+
+
         internal static void NullifyBundleFileIds(AddressableAssetSettings settings)
         {
             foreach (AddressableAssetGroup group in settings.groups)
@@ -2606,6 +2659,9 @@ namespace UnityEditor.AddressableAssets.Settings
 
         internal AddressablesPlayerBuildResult BuildPlayerContentImpl()
         {
+
+     
+
             if (Directory.Exists(Addressables.BuildPath))
             {
                 try
@@ -2620,6 +2676,42 @@ namespace UnityEditor.AddressableAssets.Settings
 
             var buildContext = new AddressablesDataBuilderInput(this);
             var result = ActivePlayerDataBuilder.BuildData<AddressablesPlayerBuildResult>(buildContext);
+            if (!string.IsNullOrEmpty(result.Error))
+            {
+                Debug.LogError(result.Error);
+                Debug.LogError($"Addressable content build failure (duration : {TimeSpan.FromSeconds(result.Duration).ToString("g")})");
+            }
+            else
+                Debug.Log($"Addressable content successfully built (duration : {TimeSpan.FromSeconds(result.Duration).ToString("g")})");
+            AddressableAnalytics.Report(this);
+            if (BuildScript.buildCompleted != null)
+                BuildScript.buildCompleted(result);
+            AssetDatabase.Refresh();
+            return result;
+        }
+
+        internal AddressablesAPKBuildResult BuildApkContentImpl()
+        {            
+            var apkVersionFile = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/Project/Basic");
+            var version = apkVersionFile == null ? "1.0.0.0" : apkVersionFile.text;
+            var buildContext = new AddressablesDataBuilderInput(this, version);
+          
+            if (Directory.Exists(buildContext.OutputBuildPath))
+            {
+                try
+                {
+                    Directory.Delete(buildContext.OutputBuildPath, true);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
+            }
+
+            CurrentBuildPackage = "Basic";
+
+            var result = ActivePlayerDataBuilder.BuildData<AddressablesAPKBuildResult>(buildContext);
+
             if (!string.IsNullOrEmpty(result.Error))
             {
                 Debug.LogError(result.Error);

@@ -207,7 +207,7 @@ namespace UnityEngine.AddressableAssets
 
         public string BuildPath
         {
-            get { return Addressables.LibraryPath + StreamingAssetsSubFolder + "/" + PlatformMappingService.GetPlatformPathSubFolder(); }
+            get { return Addressables.LibraryPath + "/" + PlatformMappingService.GetPlatformPathSubFolder(); }
         }
 
         public string PlayerBuildDataPath

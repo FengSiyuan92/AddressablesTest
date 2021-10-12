@@ -73,6 +73,8 @@ namespace UnityEngine.AddressableAssets.ResourceLocators
         internal IResourceLocation location;
         [SerializeField]
         internal string m_LocatorId;
+        [SerializeField]
+        internal string version;
 
         /// <summary>
         /// Stores the id of the data provider.

@@ -46,8 +46,10 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
         {
             var timer = new System.Diagnostics.Stopwatch();
             timer.Start();
-            var settingsPath = Addressables.BuildPath + "/settings.json";
-            var buildLogsPath = Addressables.BuildPath + "/buildLogs.json";
+            var loadSettingsPath = builderInput.AddressableSettings.GetPathByKey("Local.BuildPath");
+            var settingsPath = loadSettingsPath + "/settings.json";
+            var buildLogsPath = loadSettingsPath + "/buildLogs.json";
+
             if (!File.Exists(settingsPath))
             {
                 IDataBuilderResult resE = new AddressablesPlayModeBuildResult() { Error = "Player content must be built before entering play mode with packed data.  This can be done from the Addressables window in the Build->Build Player Content menu command." };
@@ -79,7 +81,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
 
             //TODO: detect if the data that does exist is out of date..
             var runtimeSettingsPath = "{UnityEngine.AddressableAssets.Addressables.RuntimePath}/settings.json";
-            PlayerPrefs.SetString(Addressables.kAddressablesRuntimeDataPath, runtimeSettingsPath);
+            PlayerPrefs.SetString(Addressables.kAddressablesRuntimeDataPath, settingsPath);
             PlayerPrefs.SetString(Addressables.kAddressablesRuntimeBuildLogPath, buildLogsPath);
             IDataBuilderResult res = new AddressablesPlayModeBuildResult() { OutputPath = settingsPath, Duration = timer.Elapsed.TotalSeconds };
             m_DataBuilt = true;

@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: LuaScript
+  m_EditorClassIdentifier: 
+  m_GroupName: LuaScript
+  m_Data:
+    m_SerializedData: []
+  m_GUID: eebfd2d46a40fa349895240ab71b67ec
+  m_SerializeEntries:
+  - m_GUID: 80de22fbc100bb84eac58fc5af7bc476
+    m_Address: Assets/Project/Basic/sdk/sdk1.lua
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 37473a37d6ba9534e9fd37e75e85ed91
+    m_Address: Assets/Project/Basic/sdk/sdk2.lua
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: dfb05149c6b84e04eb1f76503026c0a3
+    m_Address: Assets/Project/Basic/sdk/sdk3.lua
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: b273ccb02a3f8b34c86412a0c17e3f14, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 97b656fd52e557c4aa4f3c41cf57d028, type: 2}
+    - {fileID: 11400000, guid: cc832475c944d8446af7eaf510a1f2a8, type: 2}
+  m_PackageName: Basic
