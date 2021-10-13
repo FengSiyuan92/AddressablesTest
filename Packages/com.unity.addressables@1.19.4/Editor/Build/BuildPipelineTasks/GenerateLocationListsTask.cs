@@ -310,7 +310,7 @@ namespace UnityEditor.AddressableAssets.Build.BuildPipelineTasks
                 return string.Empty;
             }
 
-            string loadPath = bagSchema.LoadPath.GetValue(group.Settings);
+            string loadPath = bagSchema.LoadPath.GetValue(group.Settings) + $"/{group.PackageName}";
             loadPath = loadPath.Replace('\\', '/');
             if (loadPath.EndsWith("/"))
                 loadPath += name;

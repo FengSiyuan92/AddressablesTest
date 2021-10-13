@@ -250,7 +250,7 @@ namespace UnityEditor.AddressableAssets.GUI
                 // register self build logic 
                 GUILayout.Space(spaceBetween * 2f);
                 {
-                    var guiAPK = new GUIContent("BuildAPK");
+                    var guiAPK = new GUIContent("Build");
                     Rect rApk = GUILayoutUtility.GetRect(guiAPK, EditorStyles.toolbarDropDown);
                     if (EditorGUI.DropdownButton(rApk, guiAPK, FocusType.Passive, EditorStyles.toolbarDropDown))
                     {
@@ -260,16 +260,9 @@ namespace UnityEditor.AddressableAssets.GUI
                             var m = settings.GetDataBuilder(i);
                             if (m.CanBuildData<AddressablesAPKBuildResult>())
                             {
-                                menu.AddItem(new GUIContent("New Build/APK"), false, BuildApk, i);
+                                menu.AddItem(new GUIContent("NewBuild"), false, BuildApk, i);
                             }
-                            if (m.CanBuildData<AddressablesPackageUpdateResult>())
-                            {
-                                foreach (var item in settings.Packages)
-                                {
-                                    menu.AddItem(new GUIContent("Update/" + item), false, UpdatePackage, new object[] { i, item});
-                                }
-                               
-                            }
+                       
                         }
                         menu.DropDown(rApk);
 
@@ -422,16 +415,6 @@ namespace UnityEditor.AddressableAssets.GUI
             OnSetActiveBuildScript(context);
             AddressableAssetSettings.BuildApkContent(out AddressablesAPKBuildResult rst);
         }
-
-
-        public void UpdatePackage(object context)
-        {
-            var param = context as object[];
-            var index = param[0];
-            var packageName = param[1];
-            var a = 0;
-        }
-
 
         void OnBuildScript(object context)
         {

@@ -70,7 +70,7 @@ namespace UnityEditor.AddressableAssets.Build
             {
                 if (m_OutputBuildPath == null)
                 {
-                    var dirVersionSuffix = PlayerVersion;
+                    var dirVersionSuffix = "";//PlayerVersion;
                     m_OutputBuildPath =$"{Addressables.LibraryPath}/{PlatformMappingService.GetPlatformPathSubFolder()}/{dirVersionSuffix}" ;// 
                     //var ori = Addressables.BuildPath + dirVersionSuffix; ;
               

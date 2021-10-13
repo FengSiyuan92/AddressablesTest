@@ -46,7 +46,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
         {
             var timer = new System.Diagnostics.Stopwatch();
             timer.Start();
-            var loadSettingsPath = builderInput.AddressableSettings.GetPathByKey("Local.BuildPath");
+            var loadSettingsPath = builderInput.AddressableSettings.GetPathByKey("Local.BuildPath")+"/Basic";
             var settingsPath = loadSettingsPath + "/settings.json";
             var buildLogsPath = loadSettingsPath + "/buildLogs.json";
 

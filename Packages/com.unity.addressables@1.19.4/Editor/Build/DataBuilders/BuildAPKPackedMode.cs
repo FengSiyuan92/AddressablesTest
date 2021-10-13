@@ -194,10 +194,18 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
         /// <returns></returns>
         protected virtual TResult DoBuild<TResult>(AddressablesDataBuilderInput builderInput, AddressableAssetsBuildContext aaContext) where TResult : IDataBuilderResult
         {
+
+            Func<string, string> ComposePath = (original) =>
+            {
+                var package = aaContext.Settings.CurrentBuildPackage;
+                return $"{original}/{package}";
+            };
+
             ExtractDataTask extractData = new ExtractDataTask();
             List<CachedAssetState> carryOverCachedState = new List<CachedAssetState>();
             //var tempPath = Path.GetDirectoryName(Application.dataPath) + "/" + Addressables.LibraryPath + PlatformMappingService.GetPlatformPathSubFolder() + "/addressables_content_state.bin";
-            var tempPath = builderInput.OutputBuildPath + "/addressables_content_state.bin";
+            var tempPath = ComposePath(aaContext.Settings.GetPathByKey("Local.BuildPath"))+ "addressables_content_state.bin";
+
             var playerBuildVersion = builderInput.PlayerVersion;
        
             if (!BuildUtility.CheckModifiedScenesAndAskToSave())
@@ -213,15 +221,22 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
                 buildTargetGroup,
                 aaContext.Settings.buildSettings.bundleBuildPath);
 
-            var builtinShaderBundleName = GetBuiltInShaderBundleName(aaContext) + "_unitybuiltinshaders.bundle";
 
             var schema = aaContext.Settings.DefaultGroup.GetSchema<BundledAssetGroupSchema>();
             AddBundleProvider(schema);
 
-            string monoScriptBundleName = GetMonoScriptBundleName(aaContext);
-            if (!string.IsNullOrEmpty(monoScriptBundleName))
-                monoScriptBundleName += "_monoscripts.bundle";
-            var buildTasks = RuntimeDataBuildTasks(builtinShaderBundleName, monoScriptBundleName);
+            string builtinShaderBundleName = "";
+            string monoScriptBundleName = "";
+            if (aaContext.Settings.CurrentBuildPackage == AddressableAssetSettings.DefaultAPKPackageName)
+            {
+               builtinShaderBundleName = GetBuiltInShaderBundleName(aaContext) + "_unitybuiltinshaders.bundle";
+               monoScriptBundleName = GetMonoScriptBundleName(aaContext);
+                if (!string.IsNullOrEmpty(monoScriptBundleName))
+                    monoScriptBundleName += "_monoscripts.bundle";
+            }
+      
+            
+            var buildTasks = RuntimeDataBuildTasks(builtinShaderBundleName, monoScriptBundleName, aaContext.Settings.CurrentBuildPackage == AddressableAssetSettings.DefaultAPKPackageName);
             buildTasks.Add(extractData);
 
             IBundleBuildResults results;
@@ -260,7 +275,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
                             outputBundles.Add(b >= 0 ? m_OutputAssetBundleNames[b] : buildBundles[i]);
                         }
 
-                        PostProcessBundles(assetGroup, buildBundles, outputBundles, results, aaContext.runtimeData, aaContext.locations, builderInput.Registry, primaryKeyToCatalogEntry, bundleRenameMap, postCatalogUpdateCallbacks);
+                        PostProcessBundles(assetGroup, buildBundles, outputBundles, results, aaContext.runtimeData, aaContext.locations, builderInput.Registry, primaryKeyToCatalogEntry, bundleRenameMap, postCatalogUpdateCallbacks, ComposePath);
                     }
                 }
             }
@@ -305,7 +320,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
 
             //save catalog
             var jsonText = JsonUtility.ToJson(contentCatalog);
-            CreateCatalogFiles(jsonText, builderInput, aaContext);
+            CreateCatalogFiles(jsonText, builderInput, aaContext, ComposePath);
 
             foreach (var pd in contentCatalog.ResourceProviderData)
             {
@@ -331,7 +346,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
 
             m_Linker.AddTypes(typeof(Addressables));
 
-            var outputPath = aaContext.Settings.GetPathByKey("Local.BuildPath");
+            var outputPath = ComposePath(aaContext.Settings.GetPathByKey("Local.BuildPath")) ;
 
             Directory.CreateDirectory(outputPath + "/AddressablesLink/");
             m_Linker.Save(outputPath + "/AddressablesLink/link.xml");
@@ -421,7 +436,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             return addressableEntryToCachedStateMap;
         }
 
-        internal bool CreateCatalogFiles(string jsonText, AddressablesDataBuilderInput builderInput, AddressableAssetsBuildContext aaContext)
+        internal bool CreateCatalogFiles(string jsonText, AddressablesDataBuilderInput builderInput, AddressableAssetsBuildContext aaContext, Func<string, string> ComposePath)
         {
             if (string.IsNullOrEmpty(jsonText) || builderInput == null || aaContext == null)
             {
@@ -431,8 +446,8 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
 
             // Path needs to be resolved at runtime.
             var settings = aaContext.Settings;
-            var loadPath = settings.GetPathByKey("Local.LoadPath");
-            var buildPath = settings.GetPathByKey("Local.BuildPath");
+            var loadPath = ComposePath(settings.GetPathByKey("Local.LoadPath"));
+            var buildPath = ComposePath(settings.GetPathByKey("Local.BuildPath"));
             string localLoadPath = loadPath +"/" + builderInput.RuntimeCatalogFilename;
 
             m_CatalogBuildPath = Path.Combine(buildPath, builderInput.RuntimeCatalogFilename);
@@ -940,7 +955,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
         // and isn't needed for most tests.
         internal static bool s_SkipCompilePlayerScripts = false;
 
-        static IList<IBuildTask> RuntimeDataBuildTasks(string builtinShaderBundleName, string monoScriptBundleName)
+        static IList<IBuildTask> RuntimeDataBuildTasks(string builtinShaderBundleName, string monoScriptBundleName, bool compile)
         {
             var buildTasks = new List<IBuildTask>();
 
@@ -949,16 +964,18 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             buildTasks.Add(new RebuildSpriteAtlasCache());
 
             // Player Scripts
-            if (!s_SkipCompilePlayerScripts)
+            if (compile)
                 buildTasks.Add(new BuildPlayerScripts());
             buildTasks.Add(new PostScriptsCallback());
 
             // Dependency
+            // TODO: 剥离不需要依赖的资源列表
             buildTasks.Add(new CalculateSceneDependencyData());
             buildTasks.Add(new CalculateAssetDependencyData());
             buildTasks.Add(new AddHashToBundleNameTask());
             buildTasks.Add(new StripUnusedSpriteSources());
-            buildTasks.Add(new CreateBuiltInShadersBundle(builtinShaderBundleName));
+            if (!string.IsNullOrEmpty(builtinShaderBundleName))
+                buildTasks.Add(new CreateBuiltInShadersBundle(builtinShaderBundleName));
             if (!string.IsNullOrEmpty(monoScriptBundleName))
                 buildTasks.Add(new CreateMonoScriptBundle(monoScriptBundleName));
             buildTasks.Add(new PostDependencyCallback());
@@ -1002,13 +1019,14 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             }
         }
 
-        void PostProcessBundles(AddressableAssetGroup assetGroup, List<string> buildBundles, List<string> outputBundles, IBundleBuildResults buildResult, ResourceManagerRuntimeData runtimeData, List<ContentCatalogDataEntry> locations, FileRegistry registry, Dictionary<string, ContentCatalogDataEntry> primaryKeyToCatalogEntry, Dictionary<string, string> bundleRenameMap, List<Action> postCatalogUpdateCallbacks)
+        void PostProcessBundles(AddressableAssetGroup assetGroup, List<string> buildBundles, List<string> outputBundles, IBundleBuildResults buildResult, ResourceManagerRuntimeData runtimeData, List<ContentCatalogDataEntry> locations, FileRegistry registry, Dictionary<string, ContentCatalogDataEntry> primaryKeyToCatalogEntry, Dictionary<string, string> bundleRenameMap, List<Action> postCatalogUpdateCallbacks, Func<string ,string> ComposePath)
         {
             var schema = assetGroup.GetSchema<BundledAssetGroupSchema>();
             if (schema == null)
                 return;
 
             var path = schema.BuildPath.GetValue(assetGroup.Settings);
+            path = ComposePath(path);
             if (string.IsNullOrEmpty(path))
                 return;
 

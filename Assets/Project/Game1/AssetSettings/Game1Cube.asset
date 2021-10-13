@@ -10,24 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: Built In Data
+  m_Name: Game1Cube
   m_EditorClassIdentifier: 
-  m_GroupName: Built In Data
+  m_GroupName: Game1Cube
   m_Data:
     m_SerializedData: []
-  m_GUID: cd42e30e34dcf46439ff786d33ce6c3b
+  m_GUID: 60ce1017caa0e534d989e61d30d2e87d
   m_SerializeEntries:
-  - m_GUID: Resources
-    m_Address: Resources
-    m_ReadOnly: 1
+  - m_GUID: c62100bb699aa5e40a2e642d4a635047
+    m_Address: Cube
+    m_ReadOnly: 0
     m_SerializedLabels: []
-  - m_GUID: EditorSceneList
-    m_Address: EditorSceneList
-    m_ReadOnly: 1
-    m_SerializedLabels: []
-  m_ReadOnly: 1
+  m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: b273ccb02a3f8b34c86412a0c17e3f14, type: 2}
   m_SchemaSet:
     m_Schemas:
-    - {fileID: 11400000, guid: 88a3b4307d6d7da4383b99aeb74476e3, type: 2}
-  m_PackageName: Basic
+    - {fileID: 11400000, guid: 5cd1a34e70069ea4087083a64d76a011, type: 2}
+    - {fileID: 11400000, guid: dc365b20b343a2348b936f5f6bd98f37, type: 2}
+  m_PackageName: Game1

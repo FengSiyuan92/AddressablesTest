@@ -349,7 +349,7 @@ namespace UnityEditor.AddressableAssets.Settings
             }
         }
 
-        public const string DefaultAPKPackageName = "APK Package";
+        public const string DefaultAPKPackageName = "Basic";
         [SerializeField]
         public string[] Packages;
    
@@ -2619,9 +2619,6 @@ namespace UnityEditor.AddressableAssets.Settings
             result = settings.BuildPlayerContentImpl();
         }
 
-
-
-
         public static void BuildApkContent(out AddressablesAPKBuildResult result)
         {
             var settings = AddressableAssetSettingsDefaultObject.Settings;
@@ -2642,7 +2639,9 @@ namespace UnityEditor.AddressableAssets.Settings
 
             NullifyBundleFileIds(settings);
 
-            result = settings.BuildApkContentImpl();
+            var profile = settings.profileSettings.GetProfile(settings.activeProfileId);
+
+            result = settings.BuildApkContentImpl(profile.profileName);
         }
 
 
@@ -2659,8 +2658,6 @@ namespace UnityEditor.AddressableAssets.Settings
 
         internal AddressablesPlayerBuildResult BuildPlayerContentImpl()
         {
-
-     
 
             if (Directory.Exists(Addressables.BuildPath))
             {
@@ -2690,25 +2687,29 @@ namespace UnityEditor.AddressableAssets.Settings
             return result;
         }
 
-        internal AddressablesAPKBuildResult BuildApkContentImpl()
+        internal AddressablesAPKBuildResult BuildApkContentImpl(string package)
         {            
-            var apkVersionFile = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/Project/Basic");
-            var version = apkVersionFile == null ? "1.0.0.0" : apkVersionFile.text;
+            var apkVersionFile = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/Project/Basic/Config.txt");
+            var context = apkVersionFile == null ? "1.0.0.0 Basic" : apkVersionFile.text;
+            var split = context.Split(' ');
+            var version = split[0];
             var buildContext = new AddressablesDataBuilderInput(this, version);
-          
-            if (Directory.Exists(buildContext.OutputBuildPath))
+
+            var output = GetPathByKey("Local.BuildPath");
+            CurrentBuildPackage = package;
+            output += $"/{package}";
+
+            if (Directory.Exists(output))
             {
                 try
                 {
-                    Directory.Delete(buildContext.OutputBuildPath, true);
+                    Directory.Delete(output, true);
                 }
                 catch (Exception e)
                 {
                     Debug.LogException(e);
                 }
             }
-
-            CurrentBuildPackage = "Basic";
 
             var result = ActivePlayerDataBuilder.BuildData<AddressablesAPKBuildResult>(buildContext);
 

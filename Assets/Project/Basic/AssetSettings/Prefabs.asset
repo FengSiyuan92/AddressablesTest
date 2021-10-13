@@ -10,21 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: Cube
+  m_Name: Prefabs
   m_EditorClassIdentifier: 
-  m_GroupName: Cube
+  m_GroupName: Prefabs
   m_Data:
     m_SerializedData: []
-  m_GUID: ab9949f80e2e66f45aeb00a7f2ef2869
+  m_GUID: 9585866f74698d04a9840d1a735c3be4
   m_SerializeEntries:
-  - m_GUID: c62100bb699aa5e40a2e642d4a635047
-    m_Address: Assets/Project/Game1/Cube.prefab
+  - m_GUID: 6ba9f79ae6ef0964aaba000ce0a3b8de
+    m_Address: Cube
     m_ReadOnly: 0
     m_SerializedLabels: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: b273ccb02a3f8b34c86412a0c17e3f14, type: 2}
   m_SchemaSet:
     m_Schemas:
-    - {fileID: 11400000, guid: 360b979436ca4e949aadf8636e6fbc97, type: 2}
-    - {fileID: 11400000, guid: e630ae3e4c5e53341846586c8a804b06, type: 2}
-  m_PackageName: Game1
+    - {fileID: 11400000, guid: b771dc84ac32cd347a0ec107e2c553f2, type: 2}
+    - {fileID: 11400000, guid: 507a87a61ff274c4690f265d23d7ed8c, type: 2}
+  m_PackageName: Basic

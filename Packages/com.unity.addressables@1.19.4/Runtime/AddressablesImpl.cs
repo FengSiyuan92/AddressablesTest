@@ -207,7 +207,7 @@ namespace UnityEngine.AddressableAssets
 
         public string BuildPath
         {
-            get { return Addressables.LibraryPath + "/" + PlatformMappingService.GetPlatformPathSubFolder(); }
+            get { return Addressables.LibraryPath +"/" +StreamingAssetsSubFolder + "/" + PlatformMappingService.GetPlatformPathSubFolder(); }
         }
 
         public string PlayerBuildDataPath
@@ -227,6 +227,7 @@ namespace UnityEngine.AddressableAssets
 #else
                 return PlayerBuildDataPath;
 #endif
+           
             }
         }
 
@@ -296,7 +297,8 @@ namespace UnityEngine.AddressableAssets
 
         public void AddResourceLocator(IResourceLocator loc, string localCatalogHash = null, IResourceLocation remoteCatalogLocation = null)
         {
-            m_ResourceLocators.Add(new ResourceLocatorInfo(loc, localCatalogHash, remoteCatalogLocation));
+
+            m_ResourceLocators.Insert(0,new ResourceLocatorInfo(loc, localCatalogHash, remoteCatalogLocation));
         }
 
         public void RemoveResourceLocator(IResourceLocator loc)
@@ -462,7 +464,7 @@ namespace UnityEngine.AddressableAssets
 #if UNITY_EDITOR
                 PlayerPrefs.GetString(Addressables.kAddressablesRuntimeDataPath, RuntimePath + "/settings.json");
 #else
-                RuntimePath + "/settings.json";
+                RuntimePath + "/Basic" + "/settings.json";
 #endif
 
             return InitializeAsync(ResolveInternalId(settingsPath));

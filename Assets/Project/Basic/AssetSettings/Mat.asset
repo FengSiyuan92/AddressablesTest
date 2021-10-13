@@ -10,24 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: Built In Data
+  m_Name: Mat
   m_EditorClassIdentifier: 
-  m_GroupName: Built In Data
+  m_GroupName: Mat
   m_Data:
     m_SerializedData: []
-  m_GUID: cd42e30e34dcf46439ff786d33ce6c3b
+  m_GUID: 55f49cf040b9f0640abb20311a81ba13
   m_SerializeEntries:
-  - m_GUID: Resources
-    m_Address: Resources
-    m_ReadOnly: 1
+  - m_GUID: fe4135f8f15366140a88052571ceed34
+    m_Address: TestMat
+    m_ReadOnly: 0
     m_SerializedLabels: []
-  - m_GUID: EditorSceneList
-    m_Address: EditorSceneList
-    m_ReadOnly: 1
-    m_SerializedLabels: []
-  m_ReadOnly: 1
+  m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: b273ccb02a3f8b34c86412a0c17e3f14, type: 2}
   m_SchemaSet:
     m_Schemas:
-    - {fileID: 11400000, guid: 88a3b4307d6d7da4383b99aeb74476e3, type: 2}
+    - {fileID: 11400000, guid: ca849078d3af8d245ba4617f2ee16f10, type: 2}
+    - {fileID: 11400000, guid: e2a564d90f7dba9458b45475ae01eba0, type: 2}
   m_PackageName: Basic
