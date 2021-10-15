@@ -2619,7 +2619,7 @@ namespace UnityEditor.AddressableAssets.Settings
             result = settings.BuildPlayerContentImpl();
         }
 
-        public static void BuildApkContent(out AddressablesAPKBuildResult result)
+        public static void BuildApkContent(string packageName, out AddressablesAPKBuildResult result)
         {
             var settings = AddressableAssetSettingsDefaultObject.Settings;
             if (settings == null)
@@ -2641,7 +2641,7 @@ namespace UnityEditor.AddressableAssets.Settings
 
             var profile = settings.profileSettings.GetProfile(settings.activeProfileId);
 
-            result = settings.BuildApkContentImpl(profile.profileName);
+            result = settings.BuildApkContentImpl(packageName);
         }
 
 

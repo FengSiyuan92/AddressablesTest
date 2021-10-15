@@ -492,6 +492,38 @@ namespace UnityEditor.AddressableAssets.Build
             return result;
         }
 
+
+        public static AddressablesAPKBuildResult BuildPackageUpdate(string packageName, AddressableAssetSettings settings, string contentStateDataPath)
+        {
+            var cacheData = LoadContentState(contentStateDataPath);
+
+            s_StreamingAssetsExists = Directory.Exists("Assets/StreamingAssets");
+           
+            //Cleanup(false, false);
+
+            // ÐÞ¸Ä°æ±¾ºÅ
+            var splits = cacheData.playerVersion.Split('.');
+            var last = int.Parse(splits[splits.Length - 1]);
+            var v = "";
+            for (int i = 0; i < splits.Length - 1; i++)
+            {
+                v += splits[i] + ".";
+            }
+            v += ++last;
+            cacheData.playerVersion = v;
+            var context = new AddressablesDataBuilderInput(settings, cacheData.playerVersion);
+            context.PreviousContentState = cacheData;
+       
+            SceneManagerState.Record();
+            settings.CurrentBuildPackage = packageName;
+
+            var result = settings.ActivePlayerDataBuilder.BuildData<AddressablesAPKBuildResult>(context);
+            if (!string.IsNullOrEmpty(result.Error))
+                Debug.LogError(result.Error);
+            SceneManagerState.Restore();
+            return result;
+        }
+
         internal static bool IsCacheDataValid(AddressableAssetSettings settings, AddressablesContentState cacheData)
         {
             if (cacheData == null)

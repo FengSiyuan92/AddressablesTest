@@ -25,6 +25,9 @@ namespace UnityEditor.AddressableAssets.GUI
         internal string customSearchString = string.Empty;
         string m_FirstSelectedGroup;
         string m_SelectPackage;
+
+        internal string SelectedPackage => m_SelectPackage;
+
         Dictionary<string, TreeViewItem> m_packageRoot = new Dictionary<string, TreeViewItem>();
 
         private readonly Dictionary<AssetEntryTreeViewItem, bool> m_SearchedEntries = new Dictionary<AssetEntryTreeViewItem, bool>();

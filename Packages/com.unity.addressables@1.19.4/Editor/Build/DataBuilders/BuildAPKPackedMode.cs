@@ -195,6 +195,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
         protected virtual TResult DoBuild<TResult>(AddressablesDataBuilderInput builderInput, AddressableAssetsBuildContext aaContext) where TResult : IDataBuilderResult
         {
 
+            var buildAPK = aaContext.Settings.CurrentBuildPackage == AddressableAssetSettings.DefaultAPKPackageName;
             Func<string, string> ComposePath = (original) =>
             {
                 var package = aaContext.Settings.CurrentBuildPackage;
@@ -204,10 +205,10 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             ExtractDataTask extractData = new ExtractDataTask();
             List<CachedAssetState> carryOverCachedState = new List<CachedAssetState>();
             //var tempPath = Path.GetDirectoryName(Application.dataPath) + "/" + Addressables.LibraryPath + PlatformMappingService.GetPlatformPathSubFolder() + "/addressables_content_state.bin";
-            var tempPath = ComposePath(aaContext.Settings.GetPathByKey("Local.BuildPath"))+ "addressables_content_state.bin";
+            var tempPath = ComposePath(aaContext.Settings.GetPathByKey("Local.BuildPath")) + "_addressables_content_state.bin";
 
             var playerBuildVersion = builderInput.PlayerVersion;
-       
+
             if (!BuildUtility.CheckModifiedScenesAndAskToSave())
                 return AddressableAssetBuildResult.CreateResult<TResult>(null, 0, "Unsaved scenes");
 
@@ -229,13 +230,13 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             string monoScriptBundleName = "";
             if (aaContext.Settings.CurrentBuildPackage == AddressableAssetSettings.DefaultAPKPackageName)
             {
-               builtinShaderBundleName = GetBuiltInShaderBundleName(aaContext) + "_unitybuiltinshaders.bundle";
-               monoScriptBundleName = GetMonoScriptBundleName(aaContext);
+                builtinShaderBundleName = GetBuiltInShaderBundleName(aaContext) + "_unitybuiltinshaders.bundle";
+                monoScriptBundleName = GetMonoScriptBundleName(aaContext);
                 if (!string.IsNullOrEmpty(monoScriptBundleName))
                     monoScriptBundleName += "_monoscripts.bundle";
             }
-      
-            
+
+
             var buildTasks = RuntimeDataBuildTasks(builtinShaderBundleName, monoScriptBundleName, aaContext.Settings.CurrentBuildPackage == AddressableAssetSettings.DefaultAPKPackageName);
             buildTasks.Add(extractData);
 
@@ -306,7 +307,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
                     m_Linker.AddSerializedClass(resultValue.GetType().GetProperty("includedSerializeReferenceFQN").GetValue(resultValue) as System.Collections.Generic.IEnumerable<string>);
 #endif
             }
-           
+
             var contentCatalog = new ContentCatalogData(aaContext.Settings.CurrentBuildPackage);
             contentCatalog.version = builderInput.PlayerVersion;
             contentCatalog.SetData(aaContext.locations.OrderBy(f => f.InternalId).ToList(), aaContext.Settings.OptimizeCatalogSize);
@@ -321,40 +322,51 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             //save catalog
             var jsonText = JsonUtility.ToJson(contentCatalog);
             CreateCatalogFiles(jsonText, builderInput, aaContext, ComposePath);
+            CreateCatalogVersion(contentCatalog, builderInput, aaContext, ComposePath);
 
-            foreach (var pd in contentCatalog.ResourceProviderData)
-            {
-                m_Linker.AddTypes(pd.ObjectType.Value);
-                m_Linker.AddTypes(pd.GetRuntimeTypes());
-            }
-            m_Linker.AddTypes(contentCatalog.InstanceProviderData.ObjectType.Value);
-            m_Linker.AddTypes(contentCatalog.InstanceProviderData.GetRuntimeTypes());
-            m_Linker.AddTypes(contentCatalog.SceneProviderData.ObjectType.Value);
-            m_Linker.AddTypes(contentCatalog.SceneProviderData.GetRuntimeTypes());
+            // 不是构建apk则不需要创建link和setting
 
-            foreach (var io in aaContext.Settings.InitializationObjects)
+
+            string settingsPath = "";
+            if (buildAPK)
             {
-                var provider = io as IObjectInitializationDataProvider;
-                if (provider != null)
+
+
+
+                foreach (var pd in contentCatalog.ResourceProviderData)
                 {
-                    var id = provider.CreateObjectInitializationData();
-                    aaContext.runtimeData.InitializationObjects.Add(id);
-                    m_Linker.AddTypes(id.ObjectType.Value);
-                    m_Linker.AddTypes(id.GetRuntimeTypes());
+                    m_Linker.AddTypes(pd.ObjectType.Value);
+                    m_Linker.AddTypes(pd.GetRuntimeTypes());
                 }
+                m_Linker.AddTypes(contentCatalog.InstanceProviderData.ObjectType.Value);
+                m_Linker.AddTypes(contentCatalog.InstanceProviderData.GetRuntimeTypes());
+                m_Linker.AddTypes(contentCatalog.SceneProviderData.ObjectType.Value);
+                m_Linker.AddTypes(contentCatalog.SceneProviderData.GetRuntimeTypes());
+
+                foreach (var io in aaContext.Settings.InitializationObjects)
+                {
+                    var provider = io as IObjectInitializationDataProvider;
+                    if (provider != null)
+                    {
+                        var id = provider.CreateObjectInitializationData();
+                        aaContext.runtimeData.InitializationObjects.Add(id);
+                        m_Linker.AddTypes(id.ObjectType.Value);
+                        m_Linker.AddTypes(id.GetRuntimeTypes());
+                    }
+                }
+
+                m_Linker.AddTypes(typeof(Addressables));
+
+                var outputPath = ComposePath(aaContext.Settings.GetPathByKey("Local.BuildPath"));
+
+                Directory.CreateDirectory(outputPath + "/AddressablesLink/");
+                m_Linker.Save(outputPath + "/AddressablesLink/link.xml");
+                settingsPath = outputPath + "/" + builderInput.RuntimeSettingsFilename;
+                WriteFile(settingsPath, JsonUtility.ToJson(aaContext.runtimeData), builderInput.Registry);
             }
-
-            m_Linker.AddTypes(typeof(Addressables));
-
-            var outputPath = ComposePath(aaContext.Settings.GetPathByKey("Local.BuildPath")) ;
-
-            Directory.CreateDirectory(outputPath + "/AddressablesLink/");
-            m_Linker.Save(outputPath + "/AddressablesLink/link.xml");
-            var settingsPath = outputPath + "/" + builderInput.RuntimeSettingsFilename;
-            WriteFile(settingsPath, JsonUtility.ToJson(aaContext.runtimeData), builderInput.Registry);
 
             var opResult = AddressableAssetBuildResult.CreateResult<TResult>(settingsPath, aaContext.locations.Count);
-            if (extractData.BuildCache != null && builderInput.PreviousContentState == null)
+            if (extractData.BuildCache != null /*&& builderInput.PreviousContentState == null*/)
             {
                 var allEntries = new List<AddressableAssetEntry>();
                 aaContext.Settings.GetAllAssets(allEntries, false, ContentUpdateScript.GroupFilter);
@@ -448,10 +460,10 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             var settings = aaContext.Settings;
             var loadPath = ComposePath(settings.GetPathByKey("Local.LoadPath"));
             var buildPath = ComposePath(settings.GetPathByKey("Local.BuildPath"));
-            string localLoadPath = loadPath +"/" + builderInput.RuntimeCatalogFilename;
+            string localLoadPath = loadPath + "/" + builderInput.RuntimeCatalogFilename;
 
             m_CatalogBuildPath = Path.Combine(buildPath, builderInput.RuntimeCatalogFilename);
-       
+
             if (aaContext.Settings.BundleLocalCatalog)
             {
                 localLoadPath = localLoadPath.Replace(".json", ".bundle");
@@ -471,7 +483,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             string[] dependencyHashes = null;
             if (aaContext.Settings.BuildRemoteCatalog)
             {
-                dependencyHashes = CreateRemoteCatalog(jsonText, aaContext.runtimeData.CatalogLocations, aaContext.Settings, builderInput, new ProviderLoadRequestOptions() { IgnoreFailures = true });
+                dependencyHashes = CreateRemoteCatalog(jsonText, aaContext.runtimeData.CatalogLocations, aaContext.Settings, builderInput, new ProviderLoadRequestOptions() { IgnoreFailures = true }, ComposePath);
             }
 
             aaContext.runtimeData.CatalogLocations.Add(new ResourceLocationData(
@@ -483,6 +495,18 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
 
             return true;
         }
+
+
+        void CreateCatalogVersion(ContentCatalogData data, AddressablesDataBuilderInput builderInput, AddressableAssetsBuildContext aaContext, Func<string,string> ComposePath)
+        {
+            var version = data.version;;
+            var settings = aaContext.Settings;
+            //var loadPath = ComposePath(settings.GetPathByKey("Local.LoadPath"));
+            var buildPath = ComposePath(settings.GetPathByKey("Local.BuildPath")) + "/version.txt";
+      
+            WriteFile(buildPath, version, builderInput.Registry);
+        }
+
 
         internal string GetProjectName()
         {
@@ -902,15 +926,15 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             return assetsInputDef;
         }
 
-        static string[] CreateRemoteCatalog(string jsonText, List<ResourceLocationData> locations, AddressableAssetSettings aaSettings, AddressablesDataBuilderInput builderInput, ProviderLoadRequestOptions catalogLoadOptions)
+        static string[] CreateRemoteCatalog(string jsonText, List<ResourceLocationData> locations, AddressableAssetSettings aaSettings, AddressablesDataBuilderInput builderInput, ProviderLoadRequestOptions catalogLoadOptions, Func<string, string> ComposePath)
         {
             string[] dependencyHashes = null;
 
             var contentHash = HashingMethods.Calculate(jsonText).ToString();
 
             var versionedFileName = aaSettings.profileSettings.EvaluateString(aaSettings.activeProfileId, "/catalog_" + builderInput.PlayerVersion);
-            var remoteBuildFolder = aaSettings.RemoteCatalogBuildPath.GetValue(aaSettings);
-            var remoteLoadFolder = aaSettings.RemoteCatalogLoadPath.GetValue(aaSettings);
+            var remoteBuildFolder = ComposePath(aaSettings.RemoteCatalogBuildPath.GetValue(aaSettings));
+            var remoteLoadFolder = ComposePath(aaSettings.RemoteCatalogLoadPath.GetValue(aaSettings));
 
             if (string.IsNullOrEmpty(remoteBuildFolder) ||
                 string.IsNullOrEmpty(remoteLoadFolder) ||

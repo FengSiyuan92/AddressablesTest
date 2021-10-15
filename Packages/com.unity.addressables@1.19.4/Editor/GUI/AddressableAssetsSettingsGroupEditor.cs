@@ -225,7 +225,7 @@ namespace UnityEditor.AddressableAssets.GUI
                         });
                         menu.AddItem(new GUIContent("Check for Content Update Restrictions"), false, OnPrepareUpdate);
                         
-                        menu.AddItem(new GUIContent("Window/GameBuildCreate"), false, () => EditorWindow.GetWindow<ProfileWindow>().Show(true));
+                        menu.AddItem(new GUIContent("Window/ProfileManager"), false, () => EditorWindow.GetWindow<ProfileWindow>().Show(true));
                         menu.AddItem(new GUIContent("Window/Labels"), false, () => EditorWindow.GetWindow<LabelWindow>(true).Intialize(settings));
                         menu.AddItem(new GUIContent("Window/Analyze"), false, AnalyzeWindow.ShowWindow);
                         menu.AddItem(new GUIContent("Window/Hosting Services"), false, () => EditorWindow.GetWindow<HostingServicesWindow>().Show(settings));
@@ -260,16 +260,15 @@ namespace UnityEditor.AddressableAssets.GUI
                             var m = settings.GetDataBuilder(i);
                             if (m.CanBuildData<AddressablesAPKBuildResult>())
                             {
-                                menu.AddItem(new GUIContent("NewBuild"), false, BuildApk, i);
+                                menu.AddItem(new GUIContent("New Build"), false, BuildPackage, new object[] { i, m_EntryTree.SelectedPackage});
+
+                                menu.AddItem(new GUIContent("Update Package"), false, UpdatePackage, i);
                             }
-                       
                         }
                         menu.DropDown(rApk);
 
                     }
                 }
-
-
 
                 {
                     GUILayout.Space(8);
@@ -289,39 +288,41 @@ namespace UnityEditor.AddressableAssets.GUI
                 }
 
              
-                var guiBuild = new GUIContent("Build");
-                Rect rBuild = GUILayoutUtility.GetRect(guiBuild, EditorStyles.toolbarDropDown);
-                if (EditorGUI.DropdownButton(rBuild, guiBuild, FocusType.Passive, EditorStyles.toolbarDropDown))
-                {
-                    //GUIUtility.hotControl = 0;
-                    var menu = new GenericMenu();
-                    var AddressablesPlayerBuildResultBuilderExists = false;
-                    for (int i = 0; i < settings.DataBuilders.Count; i++)
-                    {
-                        var m = settings.GetDataBuilder(i);
-                        if (m.CanBuildData<AddressablesPlayerBuildResult>())
-                        {
-                            AddressablesPlayerBuildResultBuilderExists = true;
-                            menu.AddItem(new GUIContent("New Build/" + m.Name), false, OnBuildScript, i);
-                        }
-                    }
+                // modify by fengsiyuan   hide original operated item
+                //var guiBuild = new GUIContent("Build");
+                //Rect rBuild = GUILayoutUtility.GetRect(guiBuild, EditorStyles.toolbarDropDown);
+                //if (EditorGUI.DropdownButton(rBuild, guiBuild, FocusType.Passive, EditorStyles.toolbarDropDown))
+                //{
+                //    //GUIUtility.hotControl = 0;
+                //    var menu = new GenericMenu();
+                //    var AddressablesPlayerBuildResultBuilderExists = false;
+                //    for (int i = 0; i < settings.DataBuilders.Count; i++)
+                //    {
+                //        var m = settings.GetDataBuilder(i);
+                //        if (m.CanBuildData<AddressablesPlayerBuildResult>())
+                //        {
+                //            AddressablesPlayerBuildResultBuilderExists = true;
+                //            menu.AddItem(new GUIContent("New Build/" + m.Name), false, OnBuildScript, i);
+                      
+                //        }
+                //    }
 
-                    if (!AddressablesPlayerBuildResultBuilderExists)
-                    {
-                        menu.AddDisabledItem(new GUIContent("New Build/No Build Script Available"));
-                    }
+                //    if (!AddressablesPlayerBuildResultBuilderExists)
+                //    {
+                //        menu.AddDisabledItem(new GUIContent("New Build/No Build Script Available"));
+                //    }
 
-                    menu.AddItem(new GUIContent("Update a Previous Build"), false, OnUpdateBuild);
-                    menu.AddItem(new GUIContent("Clean Build/All"), false, OnCleanAll);
-                    menu.AddItem(new GUIContent("Clean Build/Content Builders/All"), false, OnCleanAddressables, null);
-                    for (int i = 0; i < settings.DataBuilders.Count; i++)
-                    {
-                        var m = settings.GetDataBuilder(i);
-                        menu.AddItem(new GUIContent("Clean Build/Content Builders/" + m.Name), false, OnCleanAddressables, m);
-                    }
-                    menu.AddItem(new GUIContent("Clean Build/Build Pipeline Cache"), false, OnCleanSBP);
-                    menu.DropDown(rBuild);
-                }
+                //    menu.AddItem(new GUIContent("Update a Previous Build"), false, OnUpdateBuild);
+                //    menu.AddItem(new GUIContent("Clean Build/All"), false, OnCleanAll);
+                //    menu.AddItem(new GUIContent("Clean Build/Content Builders/All"), false, OnCleanAddressables, null);
+                //    for (int i = 0; i < settings.DataBuilders.Count; i++)
+                //    {
+                //        var m = settings.GetDataBuilder(i);
+                //        menu.AddItem(new GUIContent("Clean Build/Content Builders/" + m.Name), false, OnCleanAddressables, m);
+                //    }
+                //    menu.AddItem(new GUIContent("Clean Build/Build Pipeline Cache"), false, OnCleanSBP);
+                //    menu.DropDown(rBuild);
+                //}
         
 
 
@@ -409,11 +410,39 @@ namespace UnityEditor.AddressableAssets.GUI
 #endif
 
 
-        public void BuildApk(object context)
+        public void BuildPackage(object context)
         {
-            var a = 0;
+
+            var param = context as object[];
+            if (param.Length < 2)
+            {
+                Debug.LogError("需要输入正确的packageName以完成构建");
+                return;
+            }
+
+            OnSetActiveBuildScript(param[0]);
+            for (int i = 1; i < param.Length; i++)
+            {
+                AddressableAssetSettings.BuildApkContent(param[i] as string, out AddressablesAPKBuildResult rst);
+            }
+        }
+
+
+        void UpdatePackage(object context)
+        {
             OnSetActiveBuildScript(context);
-            AddressableAssetSettings.BuildApkContent(out AddressablesAPKBuildResult rst);
+
+            var setting = AddressableAssetSettingsDefaultObject.Settings;
+            var targetPackage = m_EntryTree.SelectedPackage;
+            if (string.IsNullOrEmpty(targetPackage))
+            {
+                EditorUtility.DisplayDialog("无法执行更新：", "需要先选中一个Package项", "ok");
+                return;
+            }
+            var binPath = setting.GetPathByKey("Local.BuildPath");
+            binPath += $"/{targetPackage}_addressables_content_state.bin";
+            if (!string.IsNullOrEmpty(binPath))
+                ContentUpdateScript.BuildPackageUpdate(targetPackage,setting, binPath);
         }
 
         void OnBuildScript(object context)
@@ -433,6 +462,7 @@ namespace UnityEditor.AddressableAssets.GUI
             if (!string.IsNullOrEmpty(path))
                 ContentUpdateScript.BuildContentUpdate(AddressableAssetSettingsDefaultObject.Settings, path);
         }
+
 
         void OnSetActiveBuildScript(object context)
         {
@@ -460,7 +490,7 @@ namespace UnityEditor.AddressableAssets.GUI
                 settings.activeProfileId = null; //this will reset it to default.
                 activeProfileName = settings.profileSettings.GetProfileName(settings.activeProfileId);
             }
-            var profileButton = new GUIContent("Game: " + activeProfileName);
+            var profileButton = new GUIContent("Profile: " + activeProfileName);
 
             Rect r = GUILayoutUtility.GetRect(profileButton, m_ButtonStyle, GUILayout.Width(115f));
             if (EditorGUI.DropdownButton(r, profileButton, FocusType.Passive, EditorStyles.toolbarDropDown))

@@ -11,17 +11,12 @@ public class test : MonoBehaviour
         var handler = Addressables.InitializeAsync();
         handler.WaitForCompletion();
         Addressables.LoadAssetAsync<GameObject>("Cube").Completed += (go) => { Instantiate(go.Result); };
-
-
         Addressables.LoadContentCatalogAsync(Addressables.RuntimePath + "/Game1/catalog.json").WaitForCompletion();
-
-
         Addressables.LoadAssetAsync<GameObject>("Cube").Completed += (go) => { 
             var ins =Instantiate(go.Result);
             ins.transform.position = new Vector3(2, 2, 2);
         };
 
-   
         Addressables.CheckForCatalogUpdates();
         //Addressables.GetDownloadSizeAsync();
         //Addressables.DownloadDependenciesAsync();

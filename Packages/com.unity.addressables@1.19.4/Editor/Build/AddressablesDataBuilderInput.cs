@@ -53,6 +53,7 @@ namespace UnityEditor.AddressableAssets.Build
         /// </summary>
         public string RuntimeCatalogFilename = "catalog.json";
 
+
         /// <summary>
         /// The asset content state of a previous build.  This allows detection of deltas with the current build content state.  This will be
         /// null in standard builds.  This is only set during content update builds.
